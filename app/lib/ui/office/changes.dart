@@ -92,7 +92,7 @@ class _ChangesPageState extends State<ChangesPage> {
     final from = parseDay(p['from_date'])!;
     final to = parseDay(p['to_date']);
     final slot = p['slot'] == 'both' ? '' : ', ${p['slot']} only';
-    if (to == null) return 'From ${relativeDay(from, today)} until resumed$slot';
+    if (to == null) return 'From ${dayInSentence(from, today)} until resumed$slot';
     if (to == from) return '${relativeDay(from, today)}$slot';
     return '${shortDate(from)} to ${shortDate(to)}$slot';
   }
@@ -182,7 +182,7 @@ class _ChangesPageState extends State<ChangesPage> {
               for (final t in temps)
                 KRow(
                   title: names[t['customer_id']] ?? 'Customer',
-                  sub: '${litres(t['quantity'])} on ${relativeDay(parseDay(t['delivery_date'])!, today)}, ${t['slot']}${(t['note'] as String? ?? '').isEmpty ? '' : ', ${t['note']}'}',
+                  sub: '${litres(t['quantity'])} ${onDay(parseDay(t['delivery_date'])!, today)}, ${t['slot']}${(t['note'] as String? ?? '').isEmpty ? '' : ', ${t['note']}'}',
                   trailing: RoundIcon(Icons.delete_outline_rounded, size: 32, tooltip: 'Back to the usual', onTap: () => _do(() => Api.instance.rpc('remove_temporary', {'temporary_id': t['id']}))),
                 ),
             ]),

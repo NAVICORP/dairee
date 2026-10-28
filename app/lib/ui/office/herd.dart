@@ -135,8 +135,7 @@ class _HerdPageState extends State<HerdPage> {
                     height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: K.brand100, borderRadius: BorderRadius.circular(12)),
-                    child: Text('${c['tag_number']}'.length > 4 ? '${c['tag_number']}'.substring('${c['tag_number']}'.length - 4) : '${c['tag_number']}',
-                        style: T.tiny.copyWith(color: K.brand600, fontWeight: FontWeight.w800)),
+                    child: Text(tagShort('${c['tag_number']}'), style: T.small.copyWith(color: K.brand600, fontWeight: FontWeight.w800)),
                   ),
                   title: [c['tag_number'], c['name']].where((x) => x != null && '$x'.isNotEmpty).join(', '),
                   sub: [cap('${c['status']}'), if (c['breed'] != null) '${c['breed']}', if (c['pregnancy_status'] == 'pregnant') 'pregnant'].join(', '),
@@ -602,4 +601,11 @@ Future<bool> _logSheet(BuildContext context, FarmRole farm,
     c.dispose();
   }
   return ok == true;
+}
+
+/// The end of a tag, for the small badge: GM-01 shows 01, 4417 shows 4417.
+String tagShort(String tag) {
+  final parts = tag.split(RegExp(r'[^A-Za-z0-9]+')).where((p) => p.isNotEmpty).toList();
+  final last = parts.isEmpty ? tag : parts.last;
+  return last.length > 4 ? last.substring(last.length - 4) : last;
 }

@@ -99,7 +99,7 @@ class _ReportsPageState extends State<ReportsPage> {
           Row(children: [
             Expanded(child: StatTile(litres(total), 'Delivered')),
             const SizedBox(width: Sp.sm),
-            Expanded(child: StatTile('${stops.toInt()}', 'Doors')),
+            Expanded(child: StatTile('${stops.toInt()}', 'Stops')),
             const SizedBox(width: Sp.sm),
             Expanded(child: StatTile(litres(produced), 'From the herd')),
           ]),
@@ -124,7 +124,7 @@ class _ReportsPageState extends State<ReportsPage> {
             for (final x in d.reversed.whereType<Map>())
               KRow(
                 title: dayLabel(parseDay(x['day'])!),
-                sub: '${litres(x['morning'])} morning, ${litres(x['evening'])} evening, ${x['stops']} doors',
+                sub: '${litres(x['morning'])} morning, ${litres(x['evening'])} evening, ${x['stops']} stops',
                 trailing: Text(litres(toNum(x['morning']) + toNum(x['evening'])), style: T.bodyStrong),
               ),
           ]),
@@ -209,6 +209,7 @@ class _ChartPainter extends CustomPainter {
     final am = Paint()..color = K.blue;
     final pm = Paint()..color = K.sky;
     final path = Path();
+    var joined = false;
     for (var i = 0; i < days.length; i++) {
       final x = w * i + (w - bar) / 2;
       final m = toNum(days[i]['morning']).toDouble() / top * size.height;
@@ -216,12 +217,19 @@ class _ChartPainter extends CustomPainter {
       final r = Radius.circular(bar / 3);
       if (m > 0) canvas.drawRRect(RRect.fromRectAndCorners(Rect.fromLTWH(x, size.height - m, bar, m), topLeft: e > 0 ? Radius.zero : r, topRight: e > 0 ? Radius.zero : r), am);
       if (e > 0) canvas.drawRRect(RRect.fromRectAndCorners(Rect.fromLTWH(x, size.height - m - e, bar, e), topLeft: r, topRight: r), pm);
-      final py = size.height - toNum(days[i]['produced']).toDouble() / top * size.height;
+      // A day with no milk recorded from the herd is a gap in the line, not a drop to nothing.
+      final produced = toNum(days[i]['produced']).toDouble();
+      if (produced <= 0) {
+        joined = false;
+        continue;
+      }
+      final py = size.height - produced / top * size.height;
       final px = w * i + w / 2;
-      if (i == 0) {
-        path.moveTo(px, py);
-      } else {
+      if (joined) {
         path.lineTo(px, py);
+      } else {
+        path.moveTo(px, py);
+        joined = true;
       }
     }
     if (days.any((d) => toNum(d['produced']) > 0)) {

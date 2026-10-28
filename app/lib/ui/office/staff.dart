@@ -249,7 +249,7 @@ class _StaffEditorState extends State<StaffEditor> {
         if (error != null) ...[Notice(error!), const SizedBox(height: Sp.md)],
         KField(label: 'Name', controller: _name, caps: TextCapitalization.words, autofocus: isNew),
         const SizedBox(height: Sp.md),
-        KField(label: 'Title (shown only)', controller: _position, hint: 'Delivery, Office, Farm hand', caps: TextCapitalization.words),
+        KField(label: 'Job title', controller: _position, hint: 'Delivery, Office, Farm hand', caps: TextCapitalization.words),
         const SizedBox(height: Sp.md),
         const Text('WhatsApp number', style: T.label),
         const SizedBox(height: 6),

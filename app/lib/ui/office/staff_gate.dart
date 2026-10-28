@@ -129,7 +129,7 @@ class _StartFarmState extends State<StartFarm> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 const Text('Start your farm', style: T.display),
                 const SizedBox(height: 6),
-                Text('You are signed in as $who.', style: T.body.copyWith(color: K.muted)),
+                if (who.isNotEmpty) Text('You are signed in as $who.', style: T.body.copyWith(color: K.muted)),
                 const SizedBox(height: Sp.xl),
                 KCard(
                   padding: const EdgeInsets.all(Sp.xl),

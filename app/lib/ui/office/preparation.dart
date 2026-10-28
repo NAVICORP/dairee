@@ -70,7 +70,7 @@ class _PreparationPageState extends State<PreparationPage> {
         else ...[
           HeroCard(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${slotName(slot)} round, ${relativeDay(day, widget.farm.today).toLowerCase()}', style: T.small.copyWith(color: K.heroText)),
+              Text('${slotName(slot)} round, ${dayInSentence(day, widget.farm.today)}', style: T.small.copyWith(color: K.heroText)),
               const SizedBox(height: 6),
               Text(litres(s['litres']), style: T.amount),
               const SizedBox(height: 12),

@@ -85,10 +85,18 @@ rpc('report_customers', 'select public.report_customers(%s::date - 29, %s::date)
 rpc('report_money', 'select public.report_money(%s::date - 29, %s::date)', (d, d))
 rpc('herd_vs_round', 'select public.herd_vs_round(%s::date - 13, %s::date)', (d, d))
 rpc('customer_history', "select public.customer_history((select id from public.customers where name = 'Anitha Nair'), 30)")
+# Answers that depend on the day and round asked for, kept as name@day@round.
+tomorrow = run(ASHA, 'select (%s::date + 1)::text', (d,), farm)
+for day in (d, tomorrow):
+    out['rpc'][f'preparation@{day}'] = run(ASHA, 'select public.preparation(%s::date)', (day,), farm)
+    for slot in ('morning', 'evening'):
+        out['rpc'][f'round@{day}@{slot}'] = run(ASHA, 'select public.round(%s::date, %s)', (day, slot), farm)
 
 out['as']['dev'] = {
     'whoami': run(DEV, 'select public.whoami()', farm=farm),
     'round': run(DEV, "select public.round(%s::date, 'morning')", (d,), farm),
+    f'round@{d}@morning': run(DEV, "select public.round(%s::date, 'morning')", (d,), farm),
+    f'round@{d}@evening': run(DEV, "select public.round(%s::date, 'evening')", (d,), farm),
 }
 out['as']['rahul'] = {'whoami': run(RAHUL, 'select public.whoami()', farm=farm)}
 

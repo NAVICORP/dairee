@@ -81,15 +81,25 @@ class FakeServer {
     dynamic body;
     if (path.startsWith('/rest/v1/rpc/')) {
       final fn = path.substring('/rest/v1/rpc/'.length);
+      final args = r.body.isEmpty ? const <String, dynamic>{} : Map<String, dynamic>.from(jsonDecode(r.body) as Map);
+      // The most particular answer recorded: for this day and round, this day, or any.
+      final keys = [
+        if (args['day'] != null && args['slot'] != null) '$fn@${args['day']}@${args['slot']}',
+        if (args['day'] != null) '$fn@${args['day']}',
+        fn,
+      ];
       final as = (fx['as'] as Map)[who] as Map?;
+      final rpc = fx['rpc'] as Map;
       if (fn.startsWith('portal_')) {
         body = (fx['portal'] as Map)[fn];
-      } else if (as != null && as.containsKey(fn)) {
-        body = as[fn];
-      } else if ((fx['rpc'] as Map).containsKey(fn)) {
-        body = (fx['rpc'] as Map)[fn];
       } else {
-        unknown.add(fn);
+        final from = [if (as != null) as, rpc];
+        final where = [for (final m in from) for (final k in keys) if (m.containsKey(k)) (m, k)];
+        if (where.isEmpty) {
+          unknown.add(fn);
+        } else {
+          body = where.first.$1[where.first.$2];
+        }
       }
     } else if (path.startsWith('/rest/v1/')) {
       final table = path.substring('/rest/v1/'.length);
@@ -277,7 +287,7 @@ void main() {
     await shell(tester);
     await morning(tester);
     await shot(tester, '10-round');
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
+    await tap(tester, find.text('Lake View'));
     await shot(tester, '11-round-stops');
   }, skip: skip);
 
@@ -300,9 +310,14 @@ void main() {
     await shell(tester);
     await tap(tester, find.text('Customers'));
     await shot(tester, '20-customers');
-    await tap(tester, find.text('Anitha Nair'));
+  }, skip: skip);
+
+  testWidgets('a customer', (tester) async {
+    phone(tester);
+    final f = await signIn(tester);
+    await tester.pumpWidget(app(CustomerPage(farm: f, customer: row('customers', 'name', 'Anitha Nair'))));
     await shot(tester, '21-customer');
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
     await shot(tester, '22-customer-more');
   }, skip: skip);
 

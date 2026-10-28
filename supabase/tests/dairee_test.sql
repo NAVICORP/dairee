@@ -352,6 +352,13 @@ insert into public.cows (tag_number, name, status) values ('KL-001', 'Lakshmi', 
 insert into public.milk_yield (cow_id, yield_date, slot, litres) select id, current_date - 1, 'morning', 9.5 from public.cows;
 insert into public.cow_vaccinations (cow_id, vaccine, given_on) select id, 'FMD', current_date from public.cows;
 select pg_temp.ok((select count(*) from public.cow_events) = 2, 'the cow''s timeline fills itself');
+insert into public.cow_breeding_events (cow_id, kind, event_date, bull) select id, 'ai', current_date - 20, 'HF 4417' from public.cows;
+insert into public.cow_weights (cow_id, weighed_on, weight_kg) select id, current_date, 420 from public.cows;
+select pg_temp.ok((select summary from public.cow_events where kind = 'cow_breeding_events') = 'Inseminated, bull HF 4417',
+  'the timeline says what happened in words');
+select pg_temp.ok((select summary from public.cow_events where kind = 'cow_weights') = 'Weighed 420 kg', 'weights without trailing zeros');
+select pg_temp.ok((select (occurred_at at time zone 'Asia/Kolkata')::date from public.cow_events where kind = 'cow_breeding_events') = current_date - 20,
+  'a record entered later shows on the day it happened');
 select pg_temp.ok(((public.herd_vs_round(current_date - 1, current_date - 1)) -> 0 ->> 'produced')::numeric = 9.5,
   'milk produced is set against milk delivered');
 reset role;

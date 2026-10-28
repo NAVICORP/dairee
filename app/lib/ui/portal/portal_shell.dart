@@ -123,7 +123,9 @@ class _HomeState extends State<_Home> {
     final farm = Map<String, dynamic>.from(h['farm'] as Map);
     final acc = Map<String, dynamic>.from(h['account'] as Map);
     final cur = '${farm['currency']}';
-    final days = (m['days'] as List? ?? const []).whereType<Map>().toList();
+    // What has happened so far; days still to come are on the Changes tab.
+    final today = parseDay(h['today']) ?? dayOnly(DateTime.now());
+    final days = (m['days'] as List? ?? const []).whereType<Map>().where((d) => !(parseDay(d['day'])?.isAfter(today) ?? false)).toList();
     return Scaffold(
       appBar: AppBar(title: Text('${farm['name']}')),
       body: PageBody(
@@ -525,7 +527,7 @@ class _ChangesState extends State<_Changes> {
             for (final p in pauses)
               KRow(
                 title: p['to'] == null
-                    ? 'From ${relativeDay(parseDay(p['from'])!, today)}, until you resume'
+                    ? 'From ${dayInSentence(parseDay(p['from'])!, today)}, until you resume'
                     : '${shortDate(parseDay(p['from'])!)} to ${shortDate(parseDay(p['to'])!)}',
                 sub: [if (p['slot'] != 'both') '${p['slot']} only', if (p['set_by'] == 'office') 'set by the farm'].join(', '),
                 trailing: RoundIcon(Icons.delete_outline_rounded, size: 32, tooltip: 'Remove',
@@ -544,10 +546,10 @@ class _ChangesState extends State<_Changes> {
           const KCard(child: Text('None coming up.', style: T.small))
         else
           KGroup(children: [
-            for (final t in temps) KRow(title: '${litres(t['quantity'])} on ${relativeDay(parseDay(t['day'])!, today)}', sub: '${t['slot']}, agreed', trailing: const Pill('Agreed')),
+            for (final t in temps) KRow(title: '${litres(t['quantity'])} ${onDay(parseDay(t['day'])!, today)}', sub: '${t['slot']}, agreed', trailing: const Pill('Agreed')),
             for (final r in requests)
               KRow(
-                title: '${litres(r['quantity'])} on ${relativeDay(parseDay(r['day'])!, today)}',
+                title: '${litres(r['quantity'])} ${onDay(parseDay(r['day'])!, today)}',
                 sub: '${r['slot']}${(r['decided_note'] ?? '') == '' ? '' : ', ${r['decided_note']}'}',
                 trailing: r['status'] == 'pending'
                     ? KButton(

@@ -256,6 +256,9 @@ class _RoundViewState extends State<RoundView> {
     final list = stops;
     final narrowing = _q.text.trim().isNotEmpty || show != _Show.all;
     final anyMine = (list ?? const <Stop>[]).any((s) => s.staffId == widget.farm.staffId);
+    // Delivery staff see their own stops by default: the numbers follow.
+    final mineOnly = !widget.office && mine && anyMine;
+    final scope = mineOnly ? (list ?? const <Stop>[]).where((s) => s.staffId == widget.farm.staffId).toList() : (list ?? const <Stop>[]);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.office ? 'Round' : widget.farm.name),
@@ -308,29 +311,27 @@ class _RoundViewState extends State<RoundView> {
                   else if (list == null)
                     const Padding(padding: EdgeInsets.all(40), child: Loading())
                   else ...[
-                    _summary(list),
+                    if (!widget.office && anyMine) ...[
+                      KSegmented<bool>(expand: true, items: const [(true, 'My stops'), (false, 'Everyone')], value: mine, onChanged: (v) => setState(() => mine = v)),
+                      const SizedBox(height: Sp.md),
+                    ],
+                    _summary(scope),
                     const SizedBox(height: Sp.md),
                     if (locked) ...[const Notice('This day is closed. Nothing can be ticked or changed.', bad: false), const SizedBox(height: Sp.md)],
                     SearchField(controller: _q, hint: 'Search name, room or number', onChanged: (_) => setState(() {})),
                     const SizedBox(height: Sp.sm),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: Row(children: [
-                        KSegmented<_Show>(
-                          items: [
-                            (_Show.all, 'All'),
-                            (_Show.todo, 'To do ${list.where((s) => s.due && !s.delivered).length}'),
-                            (_Show.done, 'Done ${list.where((s) => s.delivered).length}'),
-                            (_Show.paused, 'Paused ${list.where((s) => s.paused).length}'),
-                          ],
-                          value: show,
-                          onChanged: (v) => setState(() => show = v),
-                        ),
-                        if (!widget.office && anyMine) ...[
-                          const SizedBox(width: Sp.sm),
-                          KSegmented<bool>(items: const [(true, 'Mine'), (false, 'Everyone')], value: mine, onChanged: (v) => setState(() => mine = v)),
+                      child: KSegmented<_Show>(
+                        items: [
+                          (_Show.all, 'All'),
+                          (_Show.todo, 'To do ${scope.where((s) => s.due && !s.delivered).length}'),
+                          (_Show.done, 'Done ${scope.where((s) => s.delivered).length}'),
+                          (_Show.paused, 'Paused ${scope.where((s) => s.paused).length}'),
                         ],
-                      ]),
+                        value: show,
+                        onChanged: (v) => setState(() => show = v),
+                      ),
                     ),
                     const SizedBox(height: Sp.md),
                     ..._groups(_shown, open: narrowing || !widget.office),
@@ -355,7 +356,7 @@ class _RoundViewState extends State<RoundView> {
     final paused = list.where((s) => s.paused).length;
     return HeroCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('${slotName(slot)} round, ${relativeDay(day, widget.farm.today).toLowerCase()}', style: T.small.copyWith(color: K.heroText)),
+        Text('${slotName(slot)} round, ${dayInSentence(day, widget.farm.today)}', style: T.small.copyWith(color: K.heroText)),
         const SizedBox(height: 6),
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Text('$done', style: T.amount),

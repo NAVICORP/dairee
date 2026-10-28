@@ -127,6 +127,18 @@ String shortDate(DateTime d, [DateTime? now]) {
 /// October 2026
 String monthLabel(DateTime d) => '${kMonths[d.month - 1]} ${d.year}';
 
+/// today, tomorrow, yesterday, or Wed 28 Oct: for the middle of a sentence.
+String dayInSentence(DateTime d, DateTime today) {
+  final r = relativeDay(d, today);
+  return r == 'Today' || r == 'Tomorrow' || r == 'Yesterday' ? r.toLowerCase() : r;
+}
+
+/// today, tomorrow, yesterday, or on Wed 28 Oct.
+String onDay(DateTime d, DateTime today) {
+  final r = dayInSentence(d, today);
+  return r == 'today' || r == 'tomorrow' || r == 'yesterday' ? r : 'on $r';
+}
+
 /// Today, Tomorrow, Yesterday, or Wed 28 Oct.
 String relativeDay(DateTime d, DateTime today) {
   final diff = dayOnly(d).difference(dayOnly(today)).inDays;

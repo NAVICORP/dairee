@@ -204,17 +204,23 @@ begin
   return new;
 end $$;
 
-create or replace function public.cow_event(f uuid, cow uuid, p_kind text, p_summary text, p_detail jsonb) returns void
+create or replace function public.cow_event(f uuid, cow uuid, p_kind text, p_summary text, p_detail jsonb,
+  p_at timestamptz default null) returns void
 language sql security definer set search_path = '' as $$
-  insert into public.cow_events (farm_id, cow_id, kind, summary, detail, actor)
-  values (f, cow, p_kind, p_summary, p_detail, public.my_name());
+  insert into public.cow_events (farm_id, cow_id, kind, summary, detail, actor, occurred_at)
+  values (f, cow, p_kind, p_summary, p_detail, public.my_name(), coalesce(p_at, now()));
 $$;
 
 create or replace function public.herd_timeline() returns trigger
 language plpgsql security definer set search_path = '' as $$
-declare j jsonb := to_jsonb(new); o jsonb; s text;
+declare j jsonb := to_jsonb(new); o jsonb; s text; d date; at timestamptz;
 begin
   if tg_op = 'UPDATE' then o := to_jsonb(old); end if;
+  -- A record entered later still shows on the day it happened.
+  d := coalesce(j ->> 'observed_on', j ->> 'given_on', j ->> 'event_date', j ->> 'weighed_on')::date;
+  if d is not null and d <> public.farm_today((j ->> 'farm_id')::uuid) then
+    at := (d + time '12:00') at time zone (select f.timezone from public.farms f where f.id = (j ->> 'farm_id')::uuid);
+  end if;
   s := case tg_table_name
     when 'cows' then case when tg_op = 'INSERT' then format('Added to the herd as %s', j ->> 'status')
                           when (o ->> 'status') is distinct from (j ->> 'status') then format('Now %s', j ->> 'status') end
@@ -222,8 +228,13 @@ begin
       (select nullif(string_agg(x, ', '), '') from jsonb_array_elements_text(j -> 'signs') x), 'checked'))
     when 'cow_vaccinations' then format('Vaccinated: %s', j ->> 'vaccine')
     when 'cow_heat_logs' then case when (j ->> 'detected')::boolean then 'In heat' else 'Heat check, not in heat' end
-    when 'cow_breeding_events' then format('Breeding: %s', replace(j ->> 'kind', '_', ' '))
-    when 'cow_weights' then format('Weighed %s kg', j ->> 'weight_kg')
+    when 'cow_breeding_events' then concat_ws(', ',
+      case j ->> 'kind' when 'ai' then 'Inseminated' when 'natural' then 'Served by a bull'
+        when 'pregnancy_check' then 'Pregnancy check' when 'calving' then 'Calved'
+        when 'abortion' then 'Lost the calf' when 'dry_off' then 'Dried off' else j ->> 'kind' end,
+      nullif(j ->> 'result', ''),
+      case when nullif(j ->> 'bull', '') is not null then 'bull ' || (j ->> 'bull') end)
+    when 'cow_weights' then format('Weighed %s kg', trim_scale((j ->> 'weight_kg')::numeric))
     when 'cow_photos' then 'New photo'
     when 'cow_assignments' then 'Worker assigned'
   end;
@@ -231,7 +242,7 @@ begin
   if s is not null and (tg_op = 'INSERT' or tg_table_name = 'cows') then
     perform public.cow_event((j ->> 'farm_id')::uuid,
       case when tg_table_name = 'cows' then (j ->> 'id')::uuid else (j ->> 'cow_id')::uuid end,
-      tg_table_name, s, j - 'farm_id');
+      tg_table_name, s, j - 'farm_id', at);
   end if;
   return null;
 end $$;

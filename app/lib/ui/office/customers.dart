@@ -144,7 +144,7 @@ class _CustomersPageState extends State<CustomersPage> {
               KRow(
                 leading: Avatar('${c['name']}', size: 36, color: c['status'] == 'active' ? K.brand100 : K.surface2, fg: c['status'] == 'active' ? K.brand600 : K.muted),
                 title: '${c['name']}',
-                sub: [placeOf(c), quantityText(c)].where((x) => x.isNotEmpty).join('  |  '),
+                sub: [placeOf(c), quantityText(c)].where((x) => x.isNotEmpty).join(', '),
                 trailing: c['status'] == 'stopped' ? const Pill.grey('Stopped') : const Icon(Icons.chevron_right_rounded, color: K.muted),
                 onTap: () => _open(c),
               ),
