@@ -1,0 +1,11 @@
+.git
+.github
+deploy
+docs
+tools
+*.md
+supabase/tests
+app/*
+!app/build
+app/build/*
+!app/build/web

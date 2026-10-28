@@ -1,0 +1,137 @@
+# Dairee on one server: Postgres, the Dairee API, and the site in front of it.
+# Deployed with Dokploy as a Docker Compose service (paste this file as Raw, or
+# point Dokploy at GitHub NAVICORP/dairee, compose path ./deploy/docker-compose.yml).
+# The domain dairee.skifi.co goes to service `site`, port 8000.
+#
+# The image is built by GitHub Actions on every push to main
+# (ghcr.io/navicorp/dairee:latest); each deploy pulls the newest one.
+#
+# Passwords: the first start makes random ones inside the `secrets` volume.
+# Sign-in (WhatsApp codes, email codes, passwords) is SkAuth at
+# account.skifi.co, where Dairee has to be listed as an app (id "dairee").
+
+services:
+  secrets:
+    image: alpine:3.22
+    restart: "no"
+    volumes:
+      - secrets:/secrets
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        for f in db_password authenticator_password jwt_secret; do
+          if [ ! -s /secrets/$$f ]; then
+            head -c 48 /dev/urandom | base64 | tr -d '\n/+=' > /secrets/$$f
+          fi
+        done
+        chmod 644 /secrets/*
+
+  db:
+    image: ghcr.io/navicorp/farmi-life-db:latest
+    restart: unless-stopped
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DB: dairee
+      POSTGRES_PASSWORD_FILE: /secrets/db_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - secrets:/secrets:ro
+      - backups:/backups
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dairee"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # The database API, the server functions and sign-in (passed on to SkAuth).
+  # The site reaches it as `dairee-api`: plain `api` is also the name of other
+  # apps' services on Dokploy's shared network.
+  api:
+    image: ghcr.io/navicorp/dairee:latest
+    pull_policy: always
+    restart: unless-stopped
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_NAME: dairee
+      API_URL: https://dairee.skifi.co
+      SITE_URL: https://dairee.skifi.co
+      AUTH_MODE: app
+      AUTH_PROVIDER_URL: https://account.skifi.co
+      APP_ID: dairee
+      WEB_DIR: ""
+    volumes:
+      - secrets:/secrets:ro
+    networks:
+      default:
+        aliases:
+          - dairee-api
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # The plain pages, the web app, and the door to the API.
+  site:
+    image: ghcr.io/navicorp/dairee:latest
+    pull_policy: always
+    restart: unless-stopped
+    command: ["node", "/srv/site/server/site.mjs"]
+    expose:
+      - "8000"
+    environment:
+      API_INTERNAL: http://dairee-api:8000
+      SITE_URL: https://dairee.skifi.co
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # A database copy every night at 03:20 server time, the last 30 kept.
+  backup:
+    image: ghcr.io/navicorp/farmi-life-db:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - secrets:/secrets:ro
+      - backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        export PGPASSWORD="$$(cat /secrets/db_password)"
+        while true; do
+          now=$$(date +%H%M)
+          if [ "$$now" = "0320" ]; then
+            f=/backups/dairee-$$(date +%Y%m%d-%H%M).dump
+            pg_dump -h db -U postgres -d dairee -Fc -f "$$f.part" && mv "$$f.part" "$$f" && echo "backup $$f"
+            ls -1t /backups/dairee-*.dump 2>/dev/null | tail -n +31 | xargs -r rm -f
+            sleep 61
+          fi
+          sleep 30
+        done
+
+# Fixed names, so the data never depends on what Dokploy calls the project.
+volumes:
+  pgdata:
+    name: dairee_pgdata
+  secrets:
+    name: dairee_secrets
+  backups:
+    name: dairee_backups
