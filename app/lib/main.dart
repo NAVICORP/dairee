@@ -100,7 +100,7 @@ class _GateState extends State<Gate> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  /// A link from a farm (dairee.skifi.co/c/<farm>) opens customer sign-in.
+  /// A link from a farm (`dairee.skifi.co/c/<farm>`) opens customer sign-in.
   String? get _customerLink => kIsWeb ? Uri.base.queryParameters['customer'] : null;
 
   @override

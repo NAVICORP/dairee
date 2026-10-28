@@ -217,10 +217,12 @@ class _PaymentState extends State<_Payment> {
   Future<void> _load() async {
     try {
       final r = await Portal.instance.call('portal_bills');
-      if (mounted) setState(() {
-        data = Map<String, dynamic>.from(r as Map);
-        error = null;
-      });
+      if (mounted) {
+        setState(() {
+          data = Map<String, dynamic>.from(r as Map);
+          error = null;
+        });
+      }
     } on ApiError catch (e) {
       if (mounted) setState(() => error = e.message);
     }

@@ -34,10 +34,12 @@ class _StaffPageState extends State<StaffPage> {
   Future<void> _load() async {
     try {
       final r = await Api.instance.select('staff', columns: _cols, order: 'active.desc,is_admin.desc,name.asc');
-      if (mounted) setState(() {
-        list = r;
-        error = null;
-      });
+      if (mounted) {
+        setState(() {
+          list = r;
+          error = null;
+        });
+      }
     } on ApiError catch (e) {
       if (mounted) setState(() => error = e.message);
     }

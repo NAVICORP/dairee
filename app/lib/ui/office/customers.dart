@@ -73,10 +73,12 @@ class _CustomersPageState extends State<CustomersPage> {
   Future<void> _load() async {
     try {
       final r = await loadCustomers();
-      if (mounted) setState(() {
-        list = r;
-        error = null;
-      });
+      if (mounted) {
+        setState(() {
+          list = r;
+          error = null;
+        });
+      }
     } on ApiError catch (e) {
       if (mounted) setState(() => error = e.message);
     }

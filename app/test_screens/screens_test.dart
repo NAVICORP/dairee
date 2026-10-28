@@ -235,6 +235,7 @@ void main() {
     Portal.instance.client = server.client;
   });
   setUp(() {
+    // ignore: invalid_use_of_visible_for_testing_member
     SharedPreferences.setMockInitialValues({});
     Portal.instance.token = null;
   });
