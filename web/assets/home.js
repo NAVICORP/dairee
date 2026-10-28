@@ -202,3 +202,29 @@ document.documentElement.classList.add("js");
     })();
   });
 })();
+
+/* the 3D pieces around the hero phone drift a little with the pointer */
+(function () {
+  if (!window.matchMedia || !matchMedia("(pointer: fine)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var hero = document.querySelector(".hero");
+  if (!hero) return;
+  var items = [].slice.call(hero.querySelectorAll(".d3[data-depth]"));
+  if (!items.length) return;
+  var raf = 0, x = 0, y = 0;
+  hero.addEventListener("pointermove", function (e) {
+    var r = hero.getBoundingClientRect();
+    x = (e.clientX - r.left) / r.width - 0.5;
+    y = (e.clientY - r.top) / r.height - 0.5;
+    if (raf) return;
+    raf = requestAnimationFrame(function () {
+      raf = 0;
+      items.forEach(function (el) {
+        var d = parseFloat(el.getAttribute("data-depth")) || 1;
+        el.style.transform = "translate3d(" + (-x * d * 12).toFixed(1) + "px," + (-y * d * 12).toFixed(1) + "px,0)";
+      });
+    });
+  });
+  hero.addEventListener("pointerleave", function () {
+    items.forEach(function (el) { el.style.transform = ""; });
+  });
+})();

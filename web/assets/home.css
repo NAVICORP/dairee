@@ -250,8 +250,8 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 .vround__bar{height:9px;border-radius:9px;background:rgba(255,255,255,.15);margin-top:14px;overflow:hidden}
 .vround__bar i{display:block;height:100%;width:64.3%;border-radius:9px;background:var(--glow);transition:width .8s var(--ease)}
 
-.vtiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.vtile{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:16px;background:#F2F6FC}
+.vtiles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.vtile{display:flex;align-items:center;gap:10px;min-width:0;padding:11px 12px;border-radius:16px;background:#F2F6FC}
 .vtile i{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--ice);color:var(--blue);flex:none}
 .vtile i svg{width:18px;height:18px}
 .vtile b{display:block;font-family:var(--fh);font-size:21px;line-height:1.05}
@@ -470,6 +470,7 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
   .bento__more .card__copy{min-height:0}
   .bento__more .card__copy p{font-size:15px}
   .vtile{padding:10px}
+  .vtile small{white-space:normal}
   .vtile b{font-size:19px}
 
   /* the wall board */
@@ -513,6 +514,59 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
   .bento__more .card{flex-basis:90%}
   .hero__get .btn{font-size:15px;padding:0 10px}
   .foot nav a{padding:12px 5px;font-size:13.5px}
+}
+
+/* the 3D pieces: decoration only, never over text or buttons */
+.d3{position:absolute;z-index:2;display:block;pointer-events:none;animation:d3 9s ease-in-out infinite;transition:transform .6s var(--ease)}
+.d3 img{display:block;width:100%;height:auto;transform:rotate(var(--r,0deg));filter:drop-shadow(0 22px 26px rgba(4,17,43,.34))}
+.d3--glow img{filter:drop-shadow(0 0 22px rgba(125,196,255,.45)) drop-shadow(0 20px 24px rgba(0,0,0,.3))}
+@keyframes d3{0%,100%{translate:0 0}50%{translate:0 -14px}}
+.d3--back{z-index:0}
+.d3--hbottle{width:96px;left:calc(50% - 236px);top:5%;--r:-10deg;animation-delay:-1s}
+.d3--hcrate{width:176px;left:calc(50% - 346px);bottom:1%;--r:-7deg;animation-delay:-4s}
+.d3--htick{width:82px;right:calc(50% - 250px);top:7%;--r:12deg;animation-delay:-2s}
+.d3--hdrop{width:76px;left:calc(50% - 318px);top:27%;--r:-12deg;animation-delay:-6s}
+.sec__head--deco{position:relative}
+.d3--fclip{width:118px;left:calc(50% - 420px);top:-10px;--r:-12deg}
+.d3--fchurn{width:118px;right:calc(50% - 420px);top:2px;--r:9deg;animation-delay:-3s}
+.tv{position:relative}
+.d3--wclock{width:96px;right:-44px;top:-96px;--r:12deg;z-index:3;animation-delay:-2s}
+.d3--wscooter{width:140px;left:40px;bottom:-70px;--r:-4deg;z-index:3;animation-delay:-5s}
+.split__visual--deco{position:relative}
+.d3--cbubble{width:122px;right:calc(50% - 250px);top:4%;--r:10deg;z-index:3;animation-delay:-2s}
+.d3--ccoins{width:120px;left:calc(50% - 250px);bottom:6%;--r:-8deg;z-index:3;animation-delay:-4s}
+.d3--sbarn{width:150px;right:-30px;top:-70px;--r:8deg;z-index:3;animation-delay:-3s}
+.cta{overflow:hidden}
+.d3--ccow{width:180px;left:5%;bottom:-6px;--r:-6deg}
+.d3--ctick{width:98px;right:8%;top:36px;--r:10deg;animation-delay:-3s}
+.d3--cbottle{width:62px;right:16%;bottom:34px;--r:16deg;animation-delay:-5s}
+.d3--cdrop{width:66px;left:13%;top:40px;--r:-14deg;animation-delay:-2s}
+@media (max-width:1080px){
+  .d3--hbottle{left:calc(50% - 230px)}
+  .d3--hcrate{left:calc(50% - 320px)}
+}
+@media (max-width:900px){
+  .d3--fclip{left:2%;top:-34px;width:96px}
+  .d3--fchurn{right:2%;top:-24px;width:96px}
+  .d3--sbarn{right:0;top:-56px;width:120px}
+}
+@media (max-width:640px){
+  .d3 img{filter:drop-shadow(0 14px 16px rgba(4,17,43,.3))}
+  .d3--hbottle{width:62px;left:max(10px,calc(50% - 178px));top:36px}
+  .d3--hcrate{width:84px;left:auto;right:max(-4px,calc(50% - 202px));bottom:auto;top:336px}
+  .d3--htick{width:52px;right:max(12px,calc(50% - 170px));top:44px}
+  .d3--hdrop{width:48px;left:max(4px,calc(50% - 184px));top:210px}
+  .d3--fclip{width:66px;left:0;top:-50px}
+  .d3--fchurn{width:66px;right:0;top:-44px}
+  .d3--wclock{width:54px;right:-2px;top:-40px}
+  .d3--wscooter{width:92px;left:10px;bottom:-52px}
+  .d3--cbubble{width:80px;right:max(8px,calc(50% - 176px));top:2%}
+  .d3--ccoins{width:78px;left:max(8px,calc(50% - 176px));bottom:4%}
+  .d3--sbarn{width:62px;right:-2px;top:-16px}
+  .d3--ccow{width:96px;left:-14px;top:auto;bottom:-8px}
+  .d3--ctick{width:70px;right:-10px;top:18px}
+  .d3--cbottle{display:none}
+  .d3--cdrop{width:44px;left:6px;top:20px}
 }
 
 @media (prefers-reduced-motion:reduce){
