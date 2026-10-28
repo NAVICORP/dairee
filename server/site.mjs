@@ -93,30 +93,41 @@ function sendBody(req, res, status, type, body, extra = {}) {
 }
 
 /* Files, compressed once and kept, with an ETag so an unchanged file costs a
-   304 and nothing more. */
+   304 and nothing more. CI compresses the large ones ahead of time
+   (server/pack.mjs: name.br, name.gz next to the file); those go out as they
+   are. Anything else is compressed here, quickly for a big file, since the
+   server answers no one else while it compresses. */
 const packed = new Map();
+const SIBLING = { br: '.br', gzip: '.gz' };
 function fileEntry(file, enc) {
   const st = statSync(file);
   const key = `${enc || 'raw'}:${file}`;
   const hit = packed.get(key);
   if (hit && hit.m === st.mtimeMs && hit.size === st.size) return hit;
   const raw = readFileSync(file);
-  const body = enc ? squeeze(raw, enc, true) : raw;
+  const ready = enc && existsSync(file + SIBLING[enc]) ? readFileSync(file + SIBLING[enc]) : null;
+  const body = ready || (enc ? squeeze(raw, enc, raw.length < 256 * 1024) : raw);
   const etag = `"${createHash('sha1').update(raw).digest('base64url').slice(0, 20)}${enc ? `-${enc}` : ''}"`;
   const entry = { m: st.mtimeMs, size: st.size, body, etag };
   packed.set(key, entry);
   return entry;
 }
+function encodingOf(req, file, ext) {
+  const enc = encodingFor(req);
+  if (!enc) return null;
+  if (existsSync(file + SIBLING[enc])) return enc;
+  return TEXT.has(ext) && statSync(file).size > 1024 ? enc : null;
+}
 function sendFile(req, res, file, cache, extra = {}) {
   const ext = path.extname(file).toLowerCase();
-  const enc = TEXT.has(ext) && statSync(file).size > 1024 ? encodingFor(req) : null;
+  const enc = encodingOf(req, file, ext);
   const e = fileEntry(file, enc);
   const head = {
     ...SECURITY,
     'content-type': TYPES[ext] || 'application/octet-stream',
     'cache-control': cache,
     etag: e.etag,
-    ...(TEXT.has(ext) ? { vary: 'accept-encoding' } : {}),
+    vary: 'accept-encoding',
     ...extra,
   };
   if (req.headers['if-none-match'] === e.etag) {
@@ -161,10 +172,16 @@ const PAGES = {
 
 // ---------------------------------------------------------------- the web app
 
-/* The service worker keeps exactly the files of this build, under a cache
-   named for the build, so a new release replaces the old shell in one go.
-   It answers only for the app's own files: anything under /rest, /auth or
-   /functions goes to the network every time. A cached bill is a wrong bill. */
+/* The service worker keeps this build's files under a cache named for the
+   build, so a new release replaces the old shell in one go. It answers only
+   for the app's own files: anything under /rest, /auth or /functions goes to
+   the network every time. A cached bill is a wrong bill.
+
+   It keeps what this browser uses, not every file of the build: the build
+   carries several CanvasKit engines (about 30 MB in all) and a browser uses
+   one. The page sets it up once the app is running and then tells it which
+   files it used, which come from the browser's own cache (a 304 each), so the
+   first visit spends its connection on the app alone. */
 let swCache = { at: 0, body: '' };
 function serviceWorker() {
   const index = path.join(APP, 'index.html');
@@ -177,7 +194,7 @@ function serviceWorker() {
       const f = path.join(dir, name);
       const r = rel ? `${rel}/${name}` : name;
       if (statSync(f).isDirectory()) { walk(f, r); continue; }
-      if (/^(sw\.js|flutter_service_worker\.js|version\.json|\.last_build_id)$/.test(name) || r.endsWith('.map') || r.startsWith('canvaskit/skwasm')) continue;
+      if (/^(sw\.js|flutter_service_worker\.js|version\.json|\.last_build_id|NOTICES)$/.test(name) || /\.(map|br|gz|symbols)$/.test(r)) continue;
       files.push(`/app/${r}`);
     }
   };
@@ -188,16 +205,38 @@ function serviceWorker() {
     hash.update(`${f}:${st2.size}:${st2.mtimeMs}`);
   }
   const version = hash.digest('hex').slice(0, 12);
+  const known = ['/app/', ...files.filter((f) => f !== '/app/index.html')];
+  // Every visit needs these. The engine is kept once the browser has used it.
+  const core = known.filter((f) => !f.startsWith('/app/canvaskit/'));
   const body = `// Dairee's service worker, build ${version}.
 const CACHE = 'dairee-${version}';
-const FILES = ${JSON.stringify(['/app/', ...files.filter((f) => f !== '/app/index.html')])};
+const KNOWN = new Set(${JSON.stringify(known)});
+const CORE = ${JSON.stringify(core)};
 const API = /^\\/(rest|auth|functions|storage)\\/v1(\\/|$)|^\\/platform\\//;
+const keep = (c, paths) => Promise.all(paths.map((p) => c.match(p).then((hit) => hit || c.add(p)).catch(() => {})));
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(CORE);
+    // What the last build kept for this browser (its engine) is kept again.
+    const before = new Set();
+    for (const k of await caches.keys()) {
+      if (!k.startsWith('dairee-') || k === CACHE) continue;
+      for (const r of await (await caches.open(k)).keys()) before.add(new URL(r.url).pathname);
+    }
+    await keep(c, [...before].filter((p) => KNOWN.has(p)));
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith('dairee-') && k !== CACHE).map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
+});
+// The page lists the files it used.
+self.addEventListener('message', (e) => {
+  const used = e.data && Array.isArray(e.data.keep) ? e.data.keep : [];
+  const paths = [...new Set(used.map((u) => { try { return new URL(u, location.href).pathname; } catch { return ''; } }))].filter((p) => KNOWN.has(p));
+  e.waitUntil(caches.open(CACHE).then((c) => keep(c, paths)));
 });
 self.addEventListener('fetch', (e) => {
   const req = e.request;
@@ -209,7 +248,14 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(fetch(req).catch(() => caches.match('/app/')));
     return;
   }
-  e.respondWith(caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req)));
+  if (!KNOWN.has(url.pathname)) return;
+  e.respondWith(caches.open(CACHE).then(async (c) => {
+    const hit = await c.match(req, { ignoreSearch: true });
+    if (hit) return hit;
+    const res = await fetch(req);
+    if (res.status === 200) c.put(url.pathname, res.clone()).catch(() => {});
+    return res;
+  }));
 });
 `;
   swCache = { at: st.mtimeMs, body };
