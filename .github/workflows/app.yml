@@ -123,8 +123,12 @@ jobs:
           git commit -qm "Screens for ${{ github.sha }}"
           git push -f origin HEAD:screens
 
+  # The web app as served at dairee.skifi.co/app, opened in a real browser
+  # (.github/scripts/web_check.mjs): it must draw, follow a customer link, and
+  # open again with no network. Its pictures join the `screens` branch.
   web:
-    needs: check
+    needs: [check, screens]
+    if: ${{ !cancelled() && needs.check.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -146,6 +150,28 @@ jobs:
           name: dairee-web
           path: app/build/web
           retention-days: 14
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Open it in a browser
+        run: |
+          npm i --no-save --silent playwright@1
+          npx playwright install --with-deps chromium > /dev/null
+          PORT=8000 node server/site.mjs > "$RUNNER_TEMP/site.log" 2>&1 &
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:8000/health > /dev/null && break; sleep 1; done
+          node .github/scripts/web_check.mjs http://127.0.0.1:8000
+      - name: Add the pictures to the screens branch
+        if: always()
+        run: |
+          ls web-shots/*.png > /dev/null 2>&1 || exit 0
+          mkdir -p /tmp/web && cp web-shots/*.png /tmp/web/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q origin screens; then git checkout -q -B screens FETCH_HEAD; else git checkout -q --orphan screens && git rm -rfq . && git clean -fdq; fi
+          cp /tmp/web/*.png .
+          git add *.png
+          git commit -qm "Web app pictures for ${{ github.sha }}" || exit 0
+          git push -q origin HEAD:screens
 
   android:
     needs: check
