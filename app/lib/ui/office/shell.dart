@@ -284,103 +284,34 @@ class ProfilePage extends StatelessWidget {
             ),
           ]),
         ),
-        const _Label('Farm'),
-        _Rows([
-          for (final p in pages) _Row(p.icon, p.label, () => open(p.key), sub: p.sub),
+        const GroupLabel('Farm'),
+        LinkGroup([
+          for (final p in pages) LinkRow(p.icon, p.label, () => open(p.key), sub: p.sub),
           if (farm.can('deliveries'))
-            _Row(Icons.tv_rounded, 'Wall board', () => Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => WallBoard(farm: farm))),
+            LinkRow(Icons.tv_rounded, 'Wall board', () => Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => WallBoard(farm: farm))),
                 sub: 'Today\'s rounds, full screen, for the office'),
-          if (me.farms.length > 1) _Row(Icons.swap_horiz_rounded, 'Switch farm', () => switchFarm(context, farm), value: farm.name),
-          _Row(Icons.refresh_rounded, 'Refresh my pages', reload, sub: 'After an admin changes what you can open'),
+          if (me.farms.length > 1) LinkRow(Icons.swap_horiz_rounded, 'Switch farm', () => switchFarm(context, farm), value: farm.name),
+          LinkRow(Icons.refresh_rounded, 'Refresh my pages', reload, sub: 'After an admin changes what you can open'),
         ]),
-        const _Label('Help'),
-        _Rows([
-          _Row(Icons.support_agent_rounded, 'Help and support', () => launchUrl(Uri.parse(kSupportUrl), mode: LaunchMode.externalApplication)),
-          _Row(Icons.mail_outline_rounded, 'Contact', () => launchUrl(Uri.parse('mailto:$kSupportEmail?subject=Dairee'))),
+        const GroupLabel('Help'),
+        LinkGroup([
+          LinkRow(Icons.support_agent_rounded, 'Help and support', () => launchUrl(Uri.parse(kSupportUrl), mode: LaunchMode.externalApplication)),
+          LinkRow(Icons.mail_outline_rounded, 'Contact', () => launchUrl(Uri.parse('mailto:$kSupportEmail?subject=Dairee'))),
         ]),
-        const _Label('Legal'),
-        _Rows([
-          _Row(Icons.privacy_tip_outlined, 'Privacy', () => launchUrl(Uri.parse(kPrivacyUrl), mode: LaunchMode.externalApplication)),
-          _Row(Icons.description_outlined, 'Terms', () => launchUrl(Uri.parse(kTermsUrl), mode: LaunchMode.externalApplication)),
+        const GroupLabel('Legal'),
+        LinkGroup([
+          LinkRow(Icons.privacy_tip_outlined, 'Privacy', () => launchUrl(Uri.parse(kPrivacyUrl), mode: LaunchMode.externalApplication)),
+          LinkRow(Icons.description_outlined, 'Terms', () => launchUrl(Uri.parse(kTermsUrl), mode: LaunchMode.externalApplication)),
         ]),
-        const _Label('Account'),
-        _Rows([
+        const GroupLabel('Account'),
+        LinkGroup([
           if (me.email != null)
-            _Row(Icons.password_rounded, 'Choose a password', () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SetPassword())),
+            LinkRow(Icons.password_rounded, 'Choose a password', () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SetPassword())),
                 sub: 'Sign in with your email and a password, no code'),
-          _Row(Icons.logout_rounded, 'Sign out', () => signOut(context)),
-          _Row(Icons.delete_outline_rounded, 'Delete account', () => deleteMyAccount(context), bad: true),
+          LinkRow(Icons.logout_rounded, 'Sign out', () => signOut(context)),
+          LinkRow(Icons.delete_outline_rounded, 'Delete account', () => deleteMyAccount(context), bad: true),
         ]),
       ]),
-    );
-  }
-}
-
-/// A quiet group heading, like Help or Legal.
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(Sp.sm, Sp.xl, Sp.sm, Sp.sm),
-        child: Text(text, style: T.small),
-      );
-}
-
-class _Rows extends StatelessWidget {
-  const _Rows(this.rows);
-  final List<Widget> rows;
-
-  @override
-  Widget build(BuildContext context) => KCard(
-        padding: EdgeInsets.zero,
-        child: Column(children: [
-          for (var i = 0; i < rows.length; i++) ...[if (i > 0) const Divider(), rows[i]],
-        ]),
-      );
-}
-
-class _Row extends StatelessWidget {
-  const _Row(this.icon, this.text, this.onTap, {this.sub, this.value, this.bad = false});
-  final IconData icon;
-  final String text;
-  final VoidCallback? onTap;
-  final String? sub;
-  final String? value;
-  final bool bad;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 52),
-        child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
-          child: LayoutBuilder(
-            builder: (context, box) => Row(children: [
-              Icon(icon, color: bad ? K.bad : K.blue, size: 20),
-              const SizedBox(width: Sp.md + 2),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(text, style: T.body.copyWith(color: bad ? K.bad : K.ink)),
-                  if (sub != null) Text(sub!, maxLines: 2, overflow: TextOverflow.ellipsis, style: T.small),
-                ]),
-              ),
-              if (value != null) ...[
-                const SizedBox(width: Sp.sm),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
-                  child: Text(value!, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.end, style: T.small),
-                ),
-              ],
-              const SizedBox(width: Sp.xs),
-              const Icon(Icons.chevron_right_rounded, color: K.border2),
-            ]),
-          ),
-        ),
-      ),
     );
   }
 }

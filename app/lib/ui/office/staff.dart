@@ -82,7 +82,7 @@ class _StaffPageState extends State<StaffPage> {
               ),
           ]),
         const SizedBox(height: Sp.md),
-        const Notice('Staff sign in with a code to the WhatsApp number or email you add here. Once in, they can choose a password for their email under More.', bad: false),
+        const Notice('Staff sign in with a code to the WhatsApp number or email you add here. Once in, they can choose a password for their email under Profile.', bad: false),
       ]),
     );
   }

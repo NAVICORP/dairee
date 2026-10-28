@@ -92,6 +92,33 @@ def svg(shapes, size, bg=None, scale=1.0, radius=0.0):
             f'<path fill-rule="evenodd" fill="{LIGHT}" d="{path_d(shapes["light"])}"/></g></svg>')
 
 
+def share_card(page, shapes):
+    """The picture shown when a link to the site is shared: 1200 x 630, the
+    app icon and the line from the top of the front page, on navy."""
+    import base64
+    def font(name):
+        with open(os.path.join(ROOT, 'web/assets/fonts', name), 'rb') as f:
+            return 'data:font/woff2;base64,' + base64.b64encode(f.read()).decode()
+    icon = svg(shapes, 150, bg=WHITE, scale=0.66, radius=0.24)
+    page.set_viewport_size({'width': 1200, 'height': 630})
+    page.set_content(f"""<html><head><style>
+@font-face{{font-family:B;font-weight:500 800;src:url({font('bricolage.woff2')})}}
+@font-face{{font-family:M;font-weight:400 800;src:url({font('manrope.woff2')})}}
+body{{margin:0;width:1200px;height:630px;overflow:hidden;color:#fff;font-family:M;
+  background:radial-gradient(900px 600px at 85% 0%,#1A4A97,#071C42 60%,#04112B)}}
+.in{{position:absolute;left:96px;top:96px;right:96px}}
+svg{{display:block;border-radius:36px;box-shadow:0 30px 60px -30px rgba(0,0,0,.7)}}
+h1{{font-family:B;font-weight:700;font-size:84px;line-height:1;margin:44px 0 0;letter-spacing:0}}
+p{{font-size:30px;font-weight:600;color:#D3E3FB;margin:26px 0 0;letter-spacing:0}}
+</style></head><body><div class="in">{icon}<h1>Run your dairy<br>from your phone.</h1>
+<p>dairee.skifi.co</p></div></body></html>""")
+    page.evaluate('document.fonts.ready')
+    page.wait_for_timeout(300)
+    path = os.path.join(ROOT, 'web/assets/brand/og.png')
+    Image.open(io.BytesIO(page.screenshot())).convert('RGB').save(path, optimize=True)
+    print('web/assets/brand/og.png 1200 x 630')
+
+
 def dart(shapes):
     lines = [
         '// Written by tools/brand/brand.py from tools/brand/logo-source.png. Do not edit by hand.',
@@ -180,10 +207,9 @@ def main():
     want('app/web/icons/Icon-maskable-512.png', 512, bg=WHITE, scale=0.56)
     want('app/web/icons/apple-touch-icon.png', 180, bg=WHITE, scale=0.66)
     # The site.
-    want('web/assets/brand/icon-64.png', 64)
-    want('web/assets/brand/icon-128.png', 128)
+    want('web/assets/brand/icon-64.png', 64, bg=WHITE, scale=0.7)
+    want('web/assets/brand/icon-128.png', 128, bg=WHITE, scale=0.7)
     want('web/assets/brand/touch-180.png', 180, bg=WHITE, scale=0.66)
-    want('web/assets/brand/og.png', 512, bg=WHITE, scale=0.6)
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -202,6 +228,7 @@ def main():
             render(size, **kw).save(path, optimize=True)
             print(os.path.relpath(path, ROOT), size)
         ico = {s: render(s) for s in (16, 32, 48)}
+        share_card(page, shapes)
         browser.close()
 
     blobs = []

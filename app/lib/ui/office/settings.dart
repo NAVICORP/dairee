@@ -8,7 +8,6 @@ import '../../core/format.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'reports.dart';
-import 'shell.dart';
 import 'staff_gate.dart' show copyText;
 
 const kZones = [
@@ -355,20 +354,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                   ),
               ]),
-              const SectionTitle('Account'),
-              KGroup(children: [
-                KRow(
-                  leading: const Icon(Icons.logout_rounded, color: K.ink2, size: 20),
-                  title: 'Sign out',
-                  onTap: () async {
-                    Me.instance.clear();
-                    await Api.instance.signOut();
-                  },
-                ),
-                KRow(leading: const Icon(Icons.person_remove_outlined, color: K.bad, size: 20), title: 'Delete my account', onTap: () => deleteMyAccount(context)),
-                if (f.isAdmin)
+              if (f.isAdmin) ...[
+                const SectionTitle('Close the farm'),
+                KGroup(children: [
                   KRow(leading: const Icon(Icons.delete_forever_outlined, color: K.bad, size: 20), title: 'Delete this farm', onTap: _deleteFarm),
-              ]),
+                ]),
+              ],
             ]),
     );
   }

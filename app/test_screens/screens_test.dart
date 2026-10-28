@@ -473,8 +473,8 @@ void main() {
     await shot(tester, '91-portal-payment');
     await tap(tester, find.text('Changes'));
     await shot(tester, '92-portal-changes');
-    await tap(tester, find.text('Settings'));
-    await shot(tester, '93-portal-settings');
+    await tap(tester, find.text('Profile'));
+    await shot(tester, '93-portal-profile');
   }, skip: skip);
 
   // The web app on a computer: the side bar instead of the footer.

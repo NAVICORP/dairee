@@ -76,7 +76,7 @@ class _PortalShellState extends State<PortalShell> {
           KNavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
           KNavItem(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Payment'),
           KNavItem(Icons.event_note_outlined, Icons.event_note_rounded, 'Changes'),
-          KNavItem(Icons.settings_outlined, Icons.settings_rounded, 'Settings'),
+          KNavItem(Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
         ],
         index: tab,
         onTap: (i) => setState(() => tab = i),
@@ -614,51 +614,57 @@ class _Settings extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Map<String, dynamic>.from(home['customer'] as Map);
     final farm = Map<String, dynamic>.from(home['farm'] as Map);
+    final place = [placeOf(c), c['address'] ?? ''].where((x) => '$x'.isNotEmpty).join(', ');
     return Scaffold(
-      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('Settings')),
-      body: PageBody(children: [
-        const SectionTitle('Profile', top: 4),
-        KGroup(children: [
-          KRow(title: 'Name', sub: '${c['name']}'),
-          KRow(title: 'Mobile', sub: prettyPhone(c['phone'] as String?)),
-          if (placeOf(c).isNotEmpty) KRow(title: 'Address', sub: [placeOf(c), c['address'] ?? ''].where((x) => '$x'.isNotEmpty).join(', ')),
+      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('Profile')),
+      body: PageBody(bottom: 40, children: [
+        KCard(
+          child: Row(children: [
+            Container(
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: K.deep, shape: BoxShape.circle),
+              child: Text(initials('${c['name']}'), style: T.h3.copyWith(color: K.heroText)),
+            ),
+            const SizedBox(width: Sp.md + 2),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${c['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: T.h3),
+                Text(prettyPhone(c['phone'] as String?), style: T.small),
+                if (place.isNotEmpty) Text(place, maxLines: 2, overflow: TextOverflow.ellipsis, style: T.small),
+              ]),
+            ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(Sp.sm, Sp.sm, Sp.sm, 0),
+          child: Text('To change these, ask ${farm['name']}.', style: T.small),
+        ),
+        const GroupLabel('Your farm'),
+        LinkGroup([
+          LinkRow(Icons.storefront_outlined, '${farm['name']}', null, value: farm['phone'] == null ? null : prettyPhone(farm['phone'] as String?)),
+          if (farm['phone'] != null) LinkRow(Icons.call_rounded, 'Call the farm', () => launchUrl(Uri.parse('tel:+${farm['phone']}'))),
         ]),
-        const SizedBox(height: Sp.sm),
-        Text('To change these, ask ${farm['name']}.', style: T.small),
-        const SectionTitle('Password'),
-        KGroup(children: [
-          KRow(
-            leading: const Icon(Icons.password_rounded, color: K.ink2, size: 20),
-            title: 'Change my password',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+        const GroupLabel('Legal'),
+        LinkGroup([
+          LinkRow(Icons.privacy_tip_outlined, 'Privacy', () => launchUrl(Uri.parse(kPrivacyUrl), mode: LaunchMode.externalApplication)),
+          LinkRow(Icons.description_outlined, 'Terms', () => launchUrl(Uri.parse(kTermsUrl), mode: LaunchMode.externalApplication)),
+        ]),
+        const GroupLabel('Account'),
+        LinkGroup([
+          LinkRow(
+            Icons.password_rounded,
+            'Change my password',
+            () => Navigator.of(context).push(MaterialPageRoute<void>(
                 builder: (_) => Scaffold(appBar: AppBar(title: const Text('Change password')), body: _ChangePassword(first: false, onDone: () async {})))),
           ),
+          LinkRow(Icons.logout_rounded, 'Sign out', () async {
+            if (await confirm(context, title: 'Sign out?', text: 'You will need your number and password to sign in again.', yes: 'Sign out')) {
+              await Portal.instance.signOut();
+            }
+          }),
         ]),
-        const SectionTitle('Your farm'),
-        KGroup(children: [
-          KRow(title: '${farm['name']}', sub: farm['phone'] == null ? null : prettyPhone(farm['phone'] as String?)),
-          if (farm['phone'] != null)
-            KRow(leading: const Icon(Icons.call_rounded, color: K.ink2, size: 20), title: 'Call the farm', onTap: () => launchUrl(Uri.parse('tel:+${farm['phone']}'))),
-        ]),
-        const SizedBox(height: Sp.lg),
-        KButton(
-            label: 'Sign out',
-            icon: Icons.logout_rounded,
-            kind: KButtonKind.secondary,
-            expand: true,
-            onPressed: () async {
-              if (await confirm(context, title: 'Sign out?', text: 'You will need your number and password to sign in again.', yes: 'Sign out')) {
-                await Portal.instance.signOut();
-              }
-            }),
-        const SizedBox(height: Sp.md),
-        Center(
-          child: KButton(
-              label: 'Privacy',
-              kind: KButtonKind.ghost,
-              small: true,
-              onPressed: () => launchUrl(Uri.parse(kPrivacyUrl), mode: LaunchMode.externalApplication)),
-        ),
       ]),
     );
   }

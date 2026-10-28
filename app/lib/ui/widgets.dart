@@ -902,6 +902,76 @@ class DayStrip extends StatelessWidget {
   }
 }
 
+/// A quiet group heading, like Help or Legal.
+class GroupLabel extends StatelessWidget {
+  const GroupLabel(this.text, {super.key});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(Sp.sm, Sp.xl, Sp.sm, Sp.sm),
+        child: Text(text, style: T.small),
+      );
+}
+
+/// Rows in one white card with hairlines between, like Kuree's Profile.
+class LinkGroup extends StatelessWidget {
+  const LinkGroup(this.rows, {super.key});
+  final List<Widget> rows;
+
+  @override
+  Widget build(BuildContext context) => KCard(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          for (var i = 0; i < rows.length; i++) ...[if (i > 0) const Divider(), rows[i]],
+        ]),
+      );
+}
+
+/// A row that opens something: a blue icon, the words, a chevron.
+class LinkRow extends StatelessWidget {
+  const LinkRow(this.icon, this.text, this.onTap, {super.key, this.sub, this.value, this.bad = false});
+  final IconData icon;
+  final String text;
+  final VoidCallback? onTap;
+  final String? sub;
+  final String? value;
+  final bool bad;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 52),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
+          child: LayoutBuilder(
+            builder: (context, box) => Row(children: [
+              Icon(icon, color: bad ? K.bad : K.blue, size: 20),
+              const SizedBox(width: Sp.md + 2),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(text, style: T.body.copyWith(color: bad ? K.bad : K.ink)),
+                  if (sub != null) Text(sub!, maxLines: 2, overflow: TextOverflow.ellipsis, style: T.small),
+                ]),
+              ),
+              if (value != null) ...[
+                const SizedBox(width: Sp.sm),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
+                  child: Text(value!, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.end, style: T.small),
+                ),
+              ],
+              if (onTap != null) ...[const SizedBox(width: Sp.xs), const Icon(Icons.chevron_right_rounded, color: K.border2)],
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Morning, today; Evening, Wed 28 Oct.
 String roundLabel(DateTime day, String slot, DateTime today) => '${slotName(slot)}, ${dayInSentence(day, today)}';
 

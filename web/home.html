@@ -3,58 +3,399 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Dairee: run your dairy farm</title>
-<meta name="description" content="The milk round, customers, bills and the herd, on Android, iPhone and the web.">
-<meta name="theme-color" content="#F7F9FC">
+<title>Dairee: run your dairy from your phone</title>
+<meta name="description" content="The milk round, packing, customers, bills and the herd, in one app. Staff tick each drop, customers see their own milk and bills.">
+<meta name="theme-color" content="#071C42">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/touch-180.png">
-<meta property="og:title" content="Dairee">
-<meta property="og:description" content="The milk round, customers, bills and the herd.">
-<meta property="og:image" content="https://dairee.skifi.co/assets/brand/icon-128.png">
+<link rel="canonical" href="https://dairee.skifi.co/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Dairee">
+<meta property="og:url" content="https://dairee.skifi.co/">
+<meta property="og:title" content="Dairee: run your dairy from your phone">
+<meta property="og:description" content="The milk round, packing, customers, bills and the herd, in one app.">
+<meta property="og:image" content="https://dairee.skifi.co/assets/brand/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/home.css">
+<script src="/assets/home.js"></script>
 </head>
 <body>
-<header class="bar">
-  <a class="brand" href="/"><img src="/assets/brand/icon-64.png" alt="" width="34" height="34">Dairee</a>
-  <a class="btn btn--small" href="/app/">Sign in</a>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+<symbol id="i-prev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="i-next" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+<symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M12 2v6"/><path d="m4.9 10.9 1.4 1.4"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m17.7 12.3 1.4-1.4"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></symbol>
+<symbol id="i-bottle" viewBox="0 0 24 24"><path d="M10 2h4"/><path d="M10.5 2v4.2c0 .8-.5 1.5-1.2 1.9C7.3 9.2 6 11.3 6 13.7V20a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6.3c0-2.4-1.3-4.5-3.3-5.6-.7-.4-1.2-1.1-1.2-1.9V2"/><path d="M9 15h6"/></symbol>
+<symbol id="i-can" viewBox="0 0 24 24"><path d="M8 3h8"/><path d="M9 3v3l-2 3v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9l-2-3V3"/><path d="M7 13h10"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2.7S6 9.1 6 14a6 6 0 0 0 12 0c0-4.9-6-11.3-6-11.3Z"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 17V5H2v12h2"/><path d="M14 9h4l3.6 4.5c.3.4.4.8.4 1.2V17h-2"/><path d="M9 17h6"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 15V9M14 15V9"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 2v20l2.3-1.5L9.7 22l2.3-1.5 2.3 1.5 2.4-1.5L19 22V2l-2.3 1.5L14.3 2 12 3.5 9.7 2 7.3 3.5Z"/><path d="M9 8h6M9 12h6M9 16h4"/></symbol>
+<symbol id="i-cloudoff" viewBox="0 0 24 24"><path d="m2 2 20 20"/><path d="M5.8 5.8A7 7 0 0 0 8 19h9c.5 0 .9-.1 1.4-.2"/><path d="M21.4 16.4A4.5 4.5 0 0 0 17.5 10h-1.3A7 7 0 0 0 9.6 5.2"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H8a6 6 0 1 1 5.7-8h1.8a4.5 4.5 0 1 1 2 8.5Z"/><path d="m9.5 13.5 2 2 3.5-3.5"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 16v-4M13 16V8M18 16v-7"/></symbol>
+<symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+<symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+</defs></svg>
+
+<header class="nav" id="nav">
+  <div class="nav__in">
+    <a class="brand" href="/" aria-label="Dairee home"><img src="/assets/brand/icon-64.png" alt="" width="34" height="34"><span>Dairee</span></a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#wall">Wall board</a>
+      <a href="#customers">Customers</a>
+      <a href="#faq">Questions</a>
+    </nav>
+    <a class="btn btn--ink btn--sm" href="/app/">Open Dairee</a>
+  </div>
 </header>
 
 <main>
-  <section class="hero">
-    <div>
-      <h1>Run your dairy farm from your phone.</h1>
-      <p>The milk round, your customers, their bills and your herd, in one app.</p>
-      <div class="cta">
-        <a class="btn" href="/app/">Open Dairee</a>
-        <a class="btn btn--light" href="/c">I'm a customer</a>
+<!-- ============================================================ hero -->
+<section class="hero" aria-labelledby="hero-h">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="wrap hero__grid">
+    <div class="hero__copy">
+      <h1 id="hero-h" class="rise">Run your dairy from your phone.</h1>
+      <p class="lead rise">Tick every drop on the round, pack the right bottles, and send bills that add up.</p>
+      <div class="hero__get rise">
+        <a class="btn btn--sky" href="/app/">Start your farm<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn--glass" href="/c">I'm a customer</a>
+      </div>
+      <p class="hero__facts rise">
+        <span><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>Any phone or computer</span>
+        <span><svg class="ic" aria-hidden="true"><use href="#i-cloudoff"/></svg>Ticks keep with no signal</span>
+      </p>
+    </div>
+
+    <div class="stage" aria-hidden="true">
+      <div class="phone phone--hero">
+        <div class="phone__screen">
+          <div class="scr">
+            <div class="scr__top"></div>
+            <div class="scr__bar">
+              <div><small>Green Meadows Dairy</small><b>Morning round</b></div>
+              <div class="scr__icons"><svg><use href="#i-more"/></svg></div>
+            </div>
+            <div class="scr__hero">
+              <div class="scr__mrow">
+                <i class="scr__cb"><svg><use href="#i-prev"/></svg></i>
+                <span><svg><use href="#i-sunrise"/></svg>Morning, today<svg><use href="#i-down"/></svg></span>
+                <i class="scr__cb"><svg><use href="#i-next"/></svg></i>
+              </div>
+              <div class="scr__amt" id="hAmt">15 L</div>
+              <div class="scr__of">of 25.5 L delivered on <span data-today>28 Oct</span></div>
+              <div class="scr__prog"><i id="hProg" style="width:53.8%"></i></div>
+              <div class="scr__row"><span><b id="hDone">7</b> of 13 delivered</span><span id="hLeft">6 to go</span></div>
+              <div class="scr__line"></div>
+              <div class="scr__note"><svg><use href="#i-bottle"/></svg><span id="hNote">2 bottles to collect, 1 paused</span></div>
+            </div>
+            <div class="scr__seg"><span class="on">All 14</span><span>To do <b id="hTodo">6</b></span><span>Done <b id="hDone2">7</b></span><span>Paused 1</span></div>
+            <div class="scr__listwrap">
+              <div class="scr__list" id="hList">
+                <div class="scr__grp" id="gLake">
+                  <div class="scr__gh"><i class="scr__gic"><svg><use href="#i-building"/></svg></i><div><b>Lake View</b><small><span data-g>2</span> of 4 done, 5 L</small></div><svg><use href="#i-up"/></svg></div>
+                  <div class="scr__m is-done"><div><b><em>3B</em>Thomas Mathew</b><small>1 L, 1 litre bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                  <div class="scr__m is-done"><div><b><em>5A</em>Lakshmi Iyer</b><small>1 L, 1 litre bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                  <div class="scr__m" data-s="a"><div><b><em>7C</em>Abdul Kareem</b><small>0.5 L, 500 ml bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                  <div class="scr__m" data-s="b"><div><b><em>9D</em>Divya Menon</b><small>2.5 L, 2 litre can, 500 ml bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                  <div class="scr__m"><div><b><em>11A</em>George Kurian</b><small>Paused till Monday</small></div><span class="scr__paused">Paused</span></div>
+                </div>
+                <div class="scr__grp" id="gPalm">
+                  <div class="scr__gh"><i class="scr__gic"><svg><use href="#i-building"/></svg></i><div><b>Palm Grove</b><small><span data-g>0</span> of 3 done, 4 L</small></div><svg><use href="#i-up"/></svg></div>
+                  <div class="scr__m" data-s="c"><div><b><em>A 101</em>Anitha Nair</b><small>1 L, 1 litre bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                  <div class="scr__m" data-s="d"><div><b><em>A 204</em>Rajesh Pillai</b><small>1.5 L, 1 litre bottle, 500 ml bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                  <div class="scr__m" data-s="e"><div><b><em>B 302</em>Fathima Rasheed</b><small>1.5 L, 1 litre bottle, 500 ml bottle</small></div><i class="scr__tick"><svg><use href="#i-check"/></svg></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sb"><b>6:41</b><span class="sb__sys"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg class="wifi" viewBox="0 0 16 12"><path d="M1.4 4.7a9.6 9.6 0 0 1 13.2 0M3.9 7.4a6 6 0 0 1 8.2 0M6.5 10.1a2.3 2.3 0 0 1 3 0" stroke-width="1.9" stroke-linecap="round"/></svg><svg class="bat" viewBox="0 0 27 13"><rect x=".6" y=".6" width="22.8" height="11.8" rx="3.4" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-width="1.2"/><rect x="2.4" y="2.4" width="19.2" height="8.2" rx="2"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2z" opacity=".45"/></svg></span></div><i class="island"></i><i class="hi"></i>
+        </div>
+      </div>
+
+      <div class="float float--msg">
+        <p class="float__head"><svg class="ic"><use href="#i-msg"/></svg>Request from Lakshmi Iyer</p>
+        <p class="float__bubble">2 L on Friday evening instead of 1 L. Family visiting.</p>
+        <p class="float__btns"><span>Yes</span><span>No</span></p>
+      </div>
+      <div class="float float--btl">
+        <i class="float__dot"><svg class="ic"><use href="#i-bottle"/></svg></i>
+        <div><b>Bottles collected</b><small>Thomas Mathew, 3B</small></div>
+      </div>
+      <div class="float float--pack" id="hPack">
+        <small>Packing for tomorrow</small>
+        <b>25.5 L</b>
+        <p class="chips"><u>13 x 1 litre bottle</u><u>5 x 500 ml bottle</u><u>4 x 2 litre can</u></p>
       </div>
     </div>
-    <div class="phone" aria-hidden="true">
-      <div class="phone__screen">
-        <div class="ph-hero">Morning round<b>64 of 100</b><div class="ph-line"><i></i></div></div>
-        <div class="ph-row"><span>Tower 1, 101<small>1 L, one bottle</small></span><i class="ph-tick on">&#10003;</i></div>
-        <div class="ph-row"><span>Tower 1, 205<small>1 L, 5 L can</small></span><i class="ph-tick on">&#10003;</i></div>
-        <div class="ph-row"><span>Tower 2, 3B<small>0.5 L, one bottle</small></span><i class="ph-tick">&#10003;</i></div>
-        <div class="ph-row"><span>Tower 2, 4A<small>Paused till Monday</small></span><i class="ph-tick">&#10003;</i></div>
+  </div>
+</section>
+
+<!-- ============================================================ features -->
+<section class="sec" id="features" aria-labelledby="f-h">
+  <div class="wrap">
+    <div class="sec__head reveal">
+      <p class="kicker">Features</p>
+      <h2 id="f-h">Everything the farm runs on.</h2>
+    </div>
+
+    <div class="bento">
+      <article class="card card--big reveal">
+        <div class="card__copy">
+          <h3>Tick every door.</h3>
+          <p>The round by building, with how much each house takes and in what. Litres out and stops to go, worked out as you go.</p>
+        </div>
+        <div class="viz viz--round" aria-hidden="true">
+          <div class="vround__hero">
+            <small>Morning round</small>
+            <b class="vround__amt">18.5 L</b>
+            <div class="vround__bar"><i></i></div>
+          </div>
+          <div class="vrow is-on"><span><em>3B</em>Thomas Mathew<small>1 L, 1 litre bottle</small></span><i class="vtick"><svg><use href="#i-check"/></svg></i></div>
+          <div class="vrow is-on"><span><em>5A</em>Lakshmi Iyer<small>1 L, 1 litre bottle</small></span><i class="vtick"><svg><use href="#i-check"/></svg></i></div>
+          <div class="vrow vrow--a"><span><em>7C</em>Abdul Kareem<small>0.5 L, 500 ml bottle</small></span><i class="vtick"><svg><use href="#i-check"/></svg></i></div>
+          <div class="vrow vrow--b"><span><em>9D</em>Divya Menon<small>2.5 L, 2 litre can, 500 ml bottle</small></span><i class="vtick"><svg><use href="#i-check"/></svg></i></div>
+        </div>
+      </article>
+
+      <div class="bento__more">
+      <article class="card reveal">
+        <div class="viz" aria-hidden="true">
+          <div class="vtiles">
+            <div class="vtile"><i><svg><use href="#i-bottle"/></svg></i><div><b>13</b><small>1 litre bottle</small></div></div>
+            <div class="vtile"><i><svg><use href="#i-bottle"/></svg></i><div><b>5</b><small>500 ml bottle</small></div></div>
+            <div class="vtile vtile--wide"><i><svg><use href="#i-can"/></svg></i><div><b>4</b><small>2 litre can, for Harbour Heights</small></div></div>
+          </div>
+        </div>
+        <div class="card__copy"><h3>Packing in one look.</h3><p>Every bottle and can to fill, for each round and each building.</p></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="viz" aria-hidden="true">
+          <div class="vweek">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            <i>1</i><i>1</i><i class="p">0</i><i class="p">0</i><i class="x">2</i><i>1</i><i>1</i>
+          </div>
+          <p class="vchip"><svg><use href="#i-pause"/></svg>Paused Wed and Thu, 2 L on Friday</p>
+        </div>
+        <div class="card__copy"><h3>Pause, stop, or more for a day.</h3><p>The round, the packing and the bill follow by themselves.</p></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="viz" aria-hidden="true">
+          <div class="vbill">
+            <p class="vbill__top"><span>Bill 0042, Anitha Nair</span><span>1 to 31 Oct</span></p>
+            <b class="vbill__amt">₹1,860</b>
+            <p class="vbill__rows"><span><b>31 L</b>at ₹60</span><span><b>₹1,000</b>paid</span><span class="due"><b>₹860</b>to pay</span></p>
+          </div>
+        </div>
+        <div class="card__copy"><h3>Bills that add up.</h3><p>From what went out, at each day's price, with advances and discounts.</p></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="viz" aria-hidden="true">
+          <div class="voff" id="vOff">
+            <div class="vrow"><span><em>1204</em>Priya Suresh<small>1 L, 1 litre bottle</small></span><i class="vtick"><svg><use href="#i-check"/></svg></i></div>
+            <div class="vrow"><span><em>1501</em>Vinod Kumar<small>1 L, 1 litre bottle</small></span><i class="vtick"><svg><use href="#i-check"/></svg></i></div>
+            <p class="vwait"><svg><use href="#i-cloudoff"/></svg><span data-w>2 ticks waiting for signal</span></p>
+          </div>
+        </div>
+        <div class="card__copy"><h3>No signal? Keep ticking.</h3><p>Ticks wait on the phone and go out when the signal is back.</p></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="viz" aria-hidden="true">
+          <div class="vbars"><i style="--h:62%"></i><i style="--h:70%"></i><i style="--h:66%"></i><i style="--h:78%"></i><i style="--h:74%"></i><i style="--h:84%"></i><i style="--h:90%"></i></div>
+          <p class="vlegend"><span><b>182 L</b> from the herd</span><span><b>176 L</b> out on rounds</span></p>
+        </div>
+        <div class="card__copy"><h3>Know your herd.</h3><p>Milk from each cow, calvings and checkups, next to what went out.</p></div>
+      </article>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="cards">
-    <div class="card"><div class="dot">1</div><h3>The round</h3><p>Who is on it, how much each takes, and a tick at every door. Works on the stairs with no signal.</p></div>
-    <div class="card"><div class="dot">2</div><h3>Bills</h3><p>Bills from what was delivered, at the price of the day. Advances and discounts handled for you.</p></div>
-    <div class="card"><div class="dot">3</div><h3>Customers</h3><p>They pause milk, ask for more, and see what they owe, without calling anyone.</p></div>
-  </section>
-
-  <section class="band">
-    <div class="band__in">
-      <div><h2>Start your farm</h2><p>Sign in, name your farm, add your first customers.</p></div>
-      <a class="btn btn--light" href="/app/">Get started</a>
+<!-- ============================================================ the wall board -->
+<section class="wall" id="wall" aria-labelledby="w-h">
+  <div class="wrap wall__grid">
+    <div class="wall__copy reveal">
+      <p class="pill pill--glass"><svg class="ic" aria-hidden="true"><use href="#i-tv"/></svg>The wall board</p>
+      <h2 id="w-h">Put today on the office wall.</h2>
+      <p class="lead">Both rounds, large, on any screen in the office. Everyone sees how far the round has got.</p>
+      <ul class="ticks">
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></i>Updates by itself every half minute</li>
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-sunrise"/></svg></i>Morning and evening side by side</li>
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-box"/></svg></i>Tomorrow's packing underneath</li>
+      </ul>
+      <div class="wall__ctl"><a class="btn btn--sky" href="/app/">Start your farm<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
     </div>
-  </section>
+    <div class="tv reveal" aria-hidden="true">
+      <div class="tv__frame">
+        <div class="wb">
+          <div class="wb__head"><div><b>Green Meadows Dairy</b><small data-long>Wednesday 28 October</small></div><span class="wb__upd">Updated <span id="wbTime">6:41 am</span></span></div>
+          <div class="wb__rounds">
+            <div class="wb__r"><small>Morning round</small><b><span id="wbM">9</span> / 13</b><em>delivered</em><div class="wb__bar"><i id="wbBar" style="width:69%"></i></div>
+              <div class="wb__stats"><span><b id="wbL">18.5 L</b>out of 25.5 L</span><span><b>2</b>bottles to collect</span><span><b>1</b>paused</span></div></div>
+            <div class="wb__r"><small>Evening round</small><b>0 / 6</b><em>delivered</em><div class="wb__bar"><i style="width:0"></i></div>
+              <div class="wb__stats"><span><b>0 L</b>out of 8 L</span><span><b>0</b>bottles to collect</span><span><b>0</b>paused</span></div></div>
+          </div>
+          <div class="wb__tom"><b>Tomorrow</b><span>Morning: 25.5 L, 13 x 1 litre bottle, 5 x 500 ml bottle</span><span>Evening: 8 L, 4 x 2 litre can</span></div>
+        </div>
+      </div>
+      <i class="tv__stand"></i>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ customers -->
+<section class="sec" id="customers" aria-labelledby="c-h">
+  <div class="wrap split">
+    <div class="split__visual reveal" aria-hidden="true">
+      <div class="phone phone--cust">
+        <div class="phone__screen">
+          <div class="scr">
+            <div class="scr__top"></div>
+            <div class="scr__bar"><div><small>Green Meadows Dairy</small><b>Lakshmi Iyer</b></div></div>
+            <div class="scr__hero">
+              <div class="scr__mrow">
+                <i class="scr__cb"><svg><use href="#i-prev"/></svg></i>
+                <span><svg><use href="#i-cal"/></svg><span data-month>October 2026</span></span>
+                <i class="scr__cb"><svg><use href="#i-next"/></svg></i>
+              </div>
+              <div class="scr__amt">52 L</div>
+              <div class="scr__of">delivered on 26 days, 2 days paused</div>
+              <div class="scr__line"></div>
+              <div class="scr__note"><svg><use href="#i-drop"/></svg><span>Usually morning 1 L, evening 1 L</span></div>
+            </div>
+            <div class="scr__tiles"><div><b>₹1,560</b><small>To pay on bills</small></div><div><b>₹0</b><small>Your credit</small></div></div>
+            <div class="scr__h">Deliveries</div>
+            <div class="scr__listwrap">
+              <div class="scr__grp">
+                <div class="scr__day"><div><b data-d="0">Wed 28 Oct, morning</b><small>1 L</small></div><span class="tagp"><svg><use href="#i-check"/></svg>Delivered</span></div>
+                <div class="scr__day"><div><b data-d="1">Tue 27 Oct, evening</b><small>1 L</small></div><span class="tagp"><svg><use href="#i-check"/></svg>Delivered</span></div>
+                <div class="scr__day"><div><b data-d="1m">Tue 27 Oct, morning</b><small>2 L, changed for the day</small></div><span class="tagp"><svg><use href="#i-check"/></svg>Delivered</span></div>
+                <div class="scr__day"><div><b data-d="2">Mon 26 Oct, evening</b><small>Paused</small></div><span class="tagp tagp--amber">Paused</span></div>
+                <div class="scr__day"><div><b data-d="2m">Mon 26 Oct, morning</b><small>Paused</small></div><span class="tagp tagp--amber">Paused</span></div>
+                <div class="scr__day"><div><b data-d="3">Sun 25 Oct, evening</b><small>1 L</small></div><span class="tagp"><svg><use href="#i-check"/></svg>Delivered</span></div>
+                <div class="scr__day"><div><b data-d="3m">Sun 25 Oct, morning</b><small>1 L</small></div><span class="tagp"><svg><use href="#i-check"/></svg>Delivered</span></div>
+                <div class="scr__day"><div><b data-d="4">Sat 24 Oct, evening</b><small>1 L</small></div><span class="tagp"><svg><use href="#i-check"/></svg>Delivered</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="sb"><b>9:41</b><span class="sb__sys"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg class="wifi" viewBox="0 0 16 12"><path d="M1.4 4.7a9.6 9.6 0 0 1 13.2 0M3.9 7.4a6 6 0 0 1 8.2 0M6.5 10.1a2.3 2.3 0 0 1 3 0" stroke-width="1.9" stroke-linecap="round"/></svg><svg class="bat" viewBox="0 0 27 13"><rect x=".6" y=".6" width="22.8" height="11.8" rx="3.4" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-width="1.2"/><rect x="2.4" y="2.4" width="19.2" height="8.2" rx="2"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2z" opacity=".45"/></svg></span></div><i class="island"></i><i class="hi"></i>
+        </div>
+      </div>
+    </div>
+    <div class="split__copy reveal">
+      <p class="kicker">For customers</p>
+      <h2 id="c-h">Customers see their own milk.</h2>
+      <p class="lead">Every delivery, every bill and what is left to pay, on their phone. No calls to ask.</p>
+      <ul class="ticks ticks--dark">
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg></i>Pause a day, or ask for more</li>
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></i>One link to share with them</li>
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></i>Nothing to install</li>
+      </ul>
+      <div class="split__cta"><a class="btn btn--ink" href="/c">I'm a customer<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ staff -->
+<section class="sec sec--ice" id="team" aria-labelledby="t-h">
+  <div class="wrap split split--rev">
+    <div class="split__copy reveal">
+      <p class="kicker">For your team</p>
+      <h2 id="t-h">Everyone sees their part.</h2>
+      <p class="lead">Add staff by WhatsApp number or email. Turn each page on or off for each person.</p>
+      <ul class="ticks ticks--dark">
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg></i>Delivery staff see just their stops</li>
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></i>Money stays with who you choose</li>
+        <li><i><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></i>Every change kept, and by whom</li>
+      </ul>
+    </div>
+    <div class="split__visual reveal" aria-hidden="true">
+      <div class="perm" id="perm">
+        <div class="perm__top"><i class="vav">OV</i><div><b>Omana Varghese</b><small>Office, works mornings</small></div></div>
+        <p class="perm__h">What Omana can open</p>
+        <div class="perm__row"><svg class="ic"><use href="#i-truck"/></svg><span>Round<small>Tick and correct any day</small></span><i class="sw on"></i></div>
+        <div class="perm__row"><svg class="ic"><use href="#i-box"/></svg><span>Packing</span><i class="sw on"></i></div>
+        <div class="perm__row"><svg class="ic"><use href="#i-users"/></svg><span>Customers</span><i class="sw on"></i></div>
+        <div class="perm__row" data-flip><svg class="ic"><use href="#i-pause"/></svg><span>Pause / Stop<small>And requests from customers</small></span><i class="sw"></i></div>
+        <div class="perm__row"><svg class="ic"><use href="#i-wallet"/></svg><span>To collect<small>Bills, payments and money</small></span><i class="sw"></i></div>
+        <div class="perm__row"><svg class="ic"><use href="#i-chart"/></svg><span>Reports</span><i class="sw"></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ questions -->
+<section class="sec" id="faq" aria-labelledby="q-h">
+  <div class="wrap faq">
+    <div class="sec__head reveal">
+      <p class="kicker">Questions</p>
+      <h2 id="q-h">Good to know.</h2>
+    </div>
+    <div class="faq__list reveal">
+      <details><summary>Does Dairee take payments?<i aria-hidden="true"></i></summary><p>No. Dairee keeps the record: bills, payments, advances and credit. Customers pay the farm the way they always have, and the office notes it down.</p></details>
+      <details><summary>Do customers need to install anything?<i aria-hidden="true"></i></summary><p>No. They open your farm's link in any browser and sign in with their number and the password the farm gives them.</p></details>
+      <details><summary>What if there is no signal on the round?<i aria-hidden="true"></i></summary><p>Keep ticking. Each tick is kept on the phone and sent as soon as there is a signal again.</p></details>
+      <details><summary>Who can see the money?<i aria-hidden="true"></i></summary><p>Only the people you give the To collect page. Delivery staff see their round and nothing else.</p></details>
+      <details><summary>Can I get my records out?<i aria-hidden="true"></i></summary><p>Yes. Customers, deliveries, bills, payments, pauses and the herd come out as spreadsheets for Excel or Google Sheets.</p></details>
+      <details><summary>Can one person work at more than one farm?<i aria-hidden="true"></i></summary><p>Yes. One sign-in works for every farm you are added to, and you switch between them from your profile.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ last call -->
+<section class="sec sec--tight" id="get">
+  <div class="wrap">
+    <div class="cta reveal">
+      <div class="cta__glow" aria-hidden="true"></div>
+      <img class="cta__icon" src="/assets/brand/touch-180.png" alt="" width="88" height="88" loading="lazy">
+      <h2>Your dairy, sorted.</h2>
+      <p>Sign in, name your farm, and add your first customers.</p>
+      <div class="cta__btns">
+        <a class="btn btn--sky" href="/app/">Start your farm<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn--glass" href="/c">I'm a customer</a>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 
-<footer class="foot"><p><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/delete-account">Delete an account</a></p><p>Made by <a href="https://skifi.co" target="_blank" rel="noopener">SkiFi</a></p></footer>
+<div class="getbar" id="getbar" aria-hidden="true">
+  <img src="/assets/brand/icon-64.png" alt="" width="40" height="40">
+  <p><b>Dairee</b><span>The dairy farm app</span></p>
+  <a class="btn btn--sky btn--sm" href="/app/" tabindex="-1">Open Dairee</a>
+</div>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <a class="brand" href="/"><img src="/assets/brand/icon-64.png" alt="" width="30" height="30" loading="lazy"><span>Dairee</span></a>
+    <nav aria-label="Footer"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/delete-account">Delete an account</a><a href="mailto:contact@skifi.co">Contact</a></nav>
+    <p>Made by <a href="https://skifi.co" target="_blank" rel="noopener">SkiFi</a></p>
+  </div>
+</footer>
 </body>
 </html>
