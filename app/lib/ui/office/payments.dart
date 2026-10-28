@@ -159,35 +159,64 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Widget build(BuildContext context) {
     final s = summary;
     return Scaffold(
-      appBar: AppBar(title: const Text('Payments'), actions: [
-        RoundIcon(Icons.receipt_long_rounded, tooltip: 'Make bills', onTap: _generate),
-        RoundIcon(Icons.add_circle_outline_rounded, tooltip: 'Record a payment', onTap: () async {
-          if (await recordPayment(context, f)) _load();
-        }),
-        const SizedBox(width: 8),
+      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('To collect'), actions: [
+        IconButton(tooltip: 'Make bills', icon: const Icon(Icons.receipt_long_outlined), onPressed: _generate),
+        const SizedBox(width: Sp.xs),
       ]),
-      body: PageBody(onRefresh: _load, children: [
+      floatingActionButton: KFab(
+        label: 'Record payment',
+        icon: Icons.add_rounded,
+        onPressed: () async {
+          if (await recordPayment(context, f)) _load();
+        },
+      ),
+      body: PageBody(onRefresh: _load, bottom: 112, children: [
         if (error != null && s == null)
           LoadFailed(message: error!, onRetry: _load)
         else if (s == null)
           const Padding(padding: EdgeInsets.all(40), child: Loading())
         else ...[
-          HeroCard(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Still to collect on bills', style: T.small.copyWith(color: K.heroText)),
-              const SizedBox(height: 6),
-              Text(f.money(toNum(s['outstanding'])), style: T.amount),
-              const SizedBox(height: 4),
-              Text('${s['unpaid_bills']} unpaid of ${s['bills']} bills', style: T.small.copyWith(color: K.heroText)),
-              const SizedBox(height: 14),
-              Wrap(spacing: 22, runSpacing: 10, children: [
-                Stat(f.money(toNum(s['collected'])), 'Collected', dark: true),
-                Stat(f.money(toNum(s['credit_held'])), 'Credit held', dark: true),
-                Stat(f.money(toNum(s['credit_applied'])), 'Credit used', dark: true),
-                Stat(f.money(toNum(s['discounts'])), 'Discounts', dark: true),
+          Builder(builder: (context) {
+            final billed = toNum(s['billed']);
+            final owed = toNum(s['outstanding']);
+            return HeroCard(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.payments_outlined, size: 17, color: K.heroText),
+                  const SizedBox(width: 7),
+                  Text('Still to collect on bills', style: T.label.copyWith(color: K.heroText, fontSize: 14.5)),
+                ]),
+                const SizedBox(height: Sp.lg),
+                FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: Text(f.money(owed), style: T.amount)),
+                const SizedBox(height: Sp.xs),
+                Text('of ${f.money(billed)} billed, ${s['unpaid_bills']} unpaid of ${s['bills']} bills',
+                    style: T.small.copyWith(color: K.heroText, fontWeight: FontWeight.w600)),
+                const SizedBox(height: Sp.md + 2),
+                ProgressLine(billed <= 0 ? 0 : (billed - owed) / billed),
+                const SizedBox(height: Sp.md),
+                Row(children: [
+                  Expanded(
+                    child: Text('${f.money(toNum(s['collected']))} collected',
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label.copyWith(color: Colors.white)),
+                  ),
+                  const SizedBox(width: Sp.sm),
+                  Text(owed > 0 ? '${f.money(owed)} to go' : 'All paid', style: T.small.copyWith(color: K.heroText)),
+                ]),
+                const SizedBox(height: Sp.md),
+                Container(height: 1, color: const Color(0x1FFFFFFF)),
+                const SizedBox(height: Sp.md),
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.savings_outlined, size: 15, color: K.heroText)),
+                  const SizedBox(width: Sp.sm),
+                  Expanded(
+                    child: Text(
+                        '${f.money(toNum(s['credit_held']))} held as credit, ${f.money(toNum(s['credit_applied']))} of credit used, ${f.money(toNum(s['discounts']))} in discounts',
+                        style: T.small.copyWith(color: K.heroText)),
+                  ),
+                ]),
               ]),
-            ]),
-          ),
+            );
+          }),
           const SizedBox(height: Sp.md),
           KSegmented<_Tab>(
             expand: true,
@@ -338,10 +367,10 @@ class _CustomerMoneyState extends State<CustomerMoney> {
     final numbers = {for (final b in bills ?? const <Map<String, dynamic>>[]) b['bill_id']: b['bill_number']};
     return Scaffold(
       appBar: AppBar(title: Text('${widget.customer['name']}'), actions: [
-        RoundIcon(Icons.add_circle_outline_rounded, tooltip: 'Record a payment', onTap: () async {
+        IconButton(icon: const Icon(Icons.add_rounded), tooltip: 'Record a payment', onPressed: () async {
           if (await recordPayment(context, f, customer: widget.customer)) _load();
         }),
-        const SizedBox(width: 8),
+        const SizedBox(width: Sp.xs),
       ]),
       body: PageBody(onRefresh: _load, children: [
         Row(children: [
@@ -474,14 +503,14 @@ class _BillPageState extends State<BillPage> {
     return Scaffold(
       appBar: AppBar(title: Text(b == null ? 'Bill' : '${b['bill_number']}'), actions: [
         if (b != null)
-          RoundIcon(Icons.ios_share_rounded, tooltip: 'Share the bill', onTap: () async {
+          IconButton(icon: const Icon(Icons.ios_share_rounded), tooltip: 'Share the bill', onPressed: () async {
             try {
               await shareBillPdf(farmName: f.name, currency: f.currency, balance: b, bill: bill!, customer: customer!);
             } catch (e) {
               if (context.mounted) toast(context, 'The bill could not be shared just now.', bad: true);
             }
           }),
-        const SizedBox(width: 8),
+        const SizedBox(width: Sp.xs),
       ]),
       body: b == null
           ? const Loading()

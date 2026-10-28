@@ -49,38 +49,52 @@ class _PreparationPageState extends State<PreparationPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Packing')),
       body: PageBody(onRefresh: _load, children: [
-        DayStrip(
-          day: day,
-          today: widget.farm.today,
-          onChanged: (d) {
-            setState(() {
-              day = d;
-              data = null;
-            });
-            _load();
-          },
+        HeroCard(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            RoundNav(
+              day: day,
+              slot: slot,
+              today: widget.farm.today,
+              onChanged: (d, sl) {
+                final moved = d != day;
+                setState(() {
+                  day = d;
+                  slot = sl;
+                  if (moved) data = null;
+                });
+                if (moved) _load();
+              },
+            ),
+            const SizedBox(height: Sp.lg),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(s == null ? '...' : litres(s['litres']), style: T.amount),
+            ),
+            const SizedBox(height: Sp.xs),
+            Text(s == null ? 'Packing' : 'to pack for ${s['customers']} ${toNum(s['customers']) == 1 ? 'customer' : 'customers'}',
+                style: T.small.copyWith(color: K.heroText, fontWeight: FontWeight.w600)),
+            const SizedBox(height: Sp.md),
+            Container(height: 1, color: const Color(0x1FFFFFFF)),
+            const SizedBox(height: Sp.md),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.inventory_2_outlined, size: 15, color: K.heroText)),
+              const SizedBox(width: Sp.sm),
+              Expanded(
+                child: Text(
+                  s == null ? 'Loading' : '${s['paused']} paused, ${s['temporary']} changed for the day',
+                  style: T.small.copyWith(color: K.heroText),
+                ),
+              ),
+            ]),
+          ]),
         ),
-        const SizedBox(height: Sp.sm),
-        KSegmented<String>(expand: true, items: const [('morning', 'Morning'), ('evening', 'Evening')], value: slot, onChanged: (v) => setState(() => slot = v)),
         const SizedBox(height: Sp.md),
         if (error != null && data == null)
           LoadFailed(message: error!, onRetry: _load)
         else if (s == null)
           const Padding(padding: EdgeInsets.all(40), child: Loading())
         else ...[
-          HeroCard(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${slotName(slot)} round, ${dayInSentence(day, widget.farm.today)}', style: T.small.copyWith(color: K.heroText)),
-              const SizedBox(height: 6),
-              Text(litres(s['litres']), style: T.amount),
-              const SizedBox(height: 12),
-              Wrap(spacing: 22, runSpacing: 10, children: [
-                Stat('${s['customers']}', 'Customers', dark: true),
-                Stat('${s['paused']}', 'Paused', dark: true),
-                Stat('${s['temporary']}', 'Changed for the day', dark: true),
-              ]),
-            ]),
-          ),
           const SectionTitle('Vessels to fill'),
           _vessels(s['vessels'] as List? ?? const []),
           if (toNum(s['unassigned_litres']) > 0) ...[

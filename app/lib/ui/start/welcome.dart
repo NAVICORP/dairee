@@ -120,7 +120,7 @@ class _WelcomeState extends State<Welcome> {
           right: -100,
           child: Container(
             height: 520,
-            decoration: const BoxDecoration(gradient: RadialGradient(colors: [Color(0x261F5FD6), Color(0x001F5FD6)], radius: 0.6)),
+            decoration: const BoxDecoration(gradient: RadialGradient(colors: [Color(0x261064D9), Color(0x001064D9)], radius: 0.6)),
           ),
         ),
         SafeArea(
@@ -130,7 +130,7 @@ class _WelcomeState extends State<Welcome> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Center(child: DaireeMark(size: 72)),
+                  const Center(child: DaireeIcon(size: 84)),
                   const SizedBox(height: 16),
                   const Text('Dairee', textAlign: TextAlign.center, style: T.display),
                   const SizedBox(height: 4),

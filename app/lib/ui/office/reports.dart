@@ -64,8 +64,8 @@ class _ReportsPageState extends State<ReportsPage> {
     final stops = (d ?? const []).whereType<Map>().fold<num>(0, (a, x) => a + toNum(x['stops']));
     return Scaffold(
       appBar: AppBar(title: const Text('Reports'), actions: [
-        RoundIcon(Icons.download_rounded, tooltip: 'Export', onTap: () => exportFarm(context, f, from: from, to: to)),
-        const SizedBox(width: 8),
+        IconButton(icon: const Icon(Icons.download_rounded), tooltip: 'Export', onPressed: () => exportFarm(context, f, from: from, to: to)),
+        const SizedBox(width: Sp.xs),
       ]),
       body: PageBody(onRefresh: _load, children: [
         KChoice(

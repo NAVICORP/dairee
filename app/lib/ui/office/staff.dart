@@ -63,11 +63,9 @@ class _StaffPageState extends State<StaffPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Staff'), actions: [
-        RoundIcon(Icons.person_add_alt_1_rounded, tooltip: 'Add staff', onTap: () => _edit()),
-        const SizedBox(width: 8),
-      ]),
-      body: PageBody(onRefresh: _load, children: [
+      appBar: AppBar(title: const Text('Staff')),
+      floatingActionButton: KFab(label: 'New staff', icon: Icons.add_rounded, onPressed: () => _edit()),
+      body: PageBody(onRefresh: _load, bottom: 112, children: [
         if (error != null && list == null)
           LoadFailed(message: error!, onRetry: _load)
         else if (list == null)

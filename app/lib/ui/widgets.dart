@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/format.dart';
+import 'brand_mark.dart';
 import 'theme.dart';
 
 enum KButtonKind { primary, secondary, ghost, danger, blue }
@@ -39,7 +40,7 @@ class KButton extends StatelessWidget {
       KButtonKind.blue => (K.blue, Colors.white, BorderSide.none),
     };
     final enabled = onPressed != null && !busy;
-    final h = small ? 38.0 : 44.0;
+    final h = small ? 40.0 : 46.0;
     final child = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -51,7 +52,7 @@ class KButton extends StatelessWidget {
         if (busy || icon != null) SizedBox(width: small ? 6 : 8),
         Flexible(
           child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-              style: T.button.copyWith(color: fg, fontSize: small ? 13 : 14)),
+              style: T.button.copyWith(color: fg, fontSize: small ? 13.5 : 14.5)),
         ),
       ],
     );
@@ -73,6 +74,28 @@ class KButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The deep pill-shaped button that floats over a list, like New chit in
+/// Kuree.
+class KFab extends StatelessWidget {
+  const KFab({super.key, required this.label, required this.icon, required this.onPressed});
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => FloatingActionButton.extended(
+        onPressed: onPressed,
+        heroTag: label,
+        backgroundColor: K.deep,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        highlightElevation: 4,
+        shape: const StadiumBorder(),
+        icon: Icon(icon),
+        label: Text(label, style: T.button.copyWith(color: Colors.white)),
+      );
 }
 
 /// A white card with a hairline border and a soft shadow.
@@ -102,7 +125,7 @@ class KCard extends StatelessWidget {
   }
 }
 
-/// The deep navy card at the top of a screen.
+/// The deep navy card at the top of a screen, lit from two corners.
 class HeroCard extends StatelessWidget {
   const HeroCard({super.key, required this.child, this.padding = const EdgeInsetsDirectional.fromSTEB(18, 16, 18, 18)});
   final Widget child;
@@ -114,7 +137,7 @@ class HeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(K.rLg),
         color: K.deep,
-        boxShadow: const [BoxShadow(color: Color(0x660A1F44), blurRadius: 40, spreadRadius: -22, offset: Offset(0, 18))],
+        boxShadow: const [BoxShadow(color: Color(0xA6071C42), blurRadius: 40, spreadRadius: -22, offset: Offset(0, 18))],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(children: [
@@ -124,7 +147,16 @@ class HeroCard extends StatelessWidget {
           child: Container(
             width: 320,
             height: 240,
-            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0x404C9BFF), Color(0x004C9BFF)])),
+            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0x524895EE), Color(0x004895EE)])),
+          ),
+        ),
+        PositionedDirectional(
+          start: -90,
+          bottom: -120,
+          child: Container(
+            width: 260,
+            height: 220,
+            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Color(0x1FD3E3FB), Color(0x00D3E3FB)])),
           ),
         ),
         Padding(padding: padding, child: child),
@@ -154,10 +186,10 @@ class Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (icon != null) ...[Icon(icon, size: 12, color: fg), const SizedBox(width: 4)],
+        if (icon != null) ...[Icon(icon, size: 13, color: fg), const SizedBox(width: 4)],
         Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.tiny.copyWith(color: fg))),
       ]),
     );
@@ -217,20 +249,20 @@ class KSegmented<V> extends StatelessWidget {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              constraints: const BoxConstraints(minHeight: 36),
+              constraints: const BoxConstraints(minHeight: 40),
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 color: v == value ? K.surface : Colors.transparent,
                 borderRadius: BorderRadius.circular(999),
-                boxShadow: v == value ? const [BoxShadow(color: Color(0x1A0A1F44), blurRadius: 6, offset: Offset(0, 2))] : null,
+                boxShadow: v == value ? const [BoxShadow(color: Color(0x1A071C42), blurRadius: 6, offset: Offset(0, 2))] : null,
               ),
               child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label.copyWith(color: v == value ? K.deep : K.muted)),
             ),
           ),
         );
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: K.surface2, borderRadius: BorderRadius.circular(999), border: Border.all(color: K.border)),
       child: Row(mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min, children: [
         for (final (v, label) in items) expand ? Expanded(child: item(v, label)) : item(v, label),
@@ -328,7 +360,7 @@ class Notice extends StatelessWidget {
 
 /// A title row for a section.
 class SectionTitle extends StatelessWidget {
-  const SectionTitle(this.text, {super.key, this.trailing, this.top = 18});
+  const SectionTitle(this.text, {super.key, this.trailing, this.top = 20});
   final String text;
   final Widget? trailing;
   final double top;
@@ -870,6 +902,82 @@ class DayStrip extends StatelessWidget {
   }
 }
 
+/// Morning, today; Evening, Wed 28 Oct.
+String roundLabel(DateTime day, String slot, DateTime today) => '${slotName(slot)}, ${dayInSentence(day, today)}';
+
+/// The round before or after: evening follows morning, and the next
+/// morning follows the evening.
+(DateTime, String) stepRound(DateTime day, String slot, int n) {
+  if (n > 0) return slot == 'morning' ? (day, 'evening') : (addDays(day, 1), 'morning');
+  return slot == 'evening' ? (day, 'morning') : (addDays(day, -1), 'evening');
+}
+
+/// A round to look at: yesterday to tomorrow, or any day from the calendar.
+Future<(DateTime, String)?> pickRound(BuildContext context, {required DateTime day, required String slot, required DateTime today}) async {
+  final pick = await showPicker<String>(context, title: 'Round', selected: '${isoDay(day)}|$slot', options: [
+    for (final d in [addDays(today, -1), today, addDays(today, 1)])
+      for (final sl in const ['morning', 'evening'])
+        PickOption('${isoDay(d)}|$sl', roundLabel(d, sl, today),
+            sub: dateLabel(d), icon: sl == 'morning' ? Icons.wb_twilight_rounded : Icons.nights_stay_outlined),
+    const PickOption('other', 'Another day', sub: 'Pick from the calendar', icon: Icons.calendar_month_outlined),
+  ]);
+  if (pick == null || !context.mounted) return null;
+  if (pick.value == 'other') {
+    final d = await pickDate(context, initial: day);
+    return d == null ? null : (dayOnly(d), slot);
+  }
+  final parts = pick.value.split('|');
+  return (parseDay(parts[0]) ?? day, parts[1]);
+}
+
+/// The top row of a round's big card, like the month row in Kuree: back a
+/// round, which round it is (tap to pick another), on a round.
+class RoundNav extends StatelessWidget {
+  const RoundNav({super.key, required this.day, required this.slot, required this.today, required this.onChanged});
+  final DateTime day;
+  final String slot;
+  final DateTime today;
+  final void Function(DateTime day, String slot) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      RoundIcon(Icons.chevron_left_rounded, dark: true, tooltip: 'Round before', onTap: () {
+        final (d, s) = stepRound(day, slot, -1);
+        onChanged(d, s);
+      }),
+      Expanded(
+        child: Semantics(
+          button: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final r = await pickRound(context, day: day, slot: slot, today: today);
+              if (r != null) onChanged(r.$1, r.$2);
+            },
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(slot == 'morning' ? Icons.wb_twilight_rounded : Icons.nights_stay_outlined, size: 17, color: K.heroText),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(roundLabel(day, slot, today),
+                      maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label.copyWith(color: K.heroText, fontSize: 14.5)),
+                ),
+                const Icon(Icons.expand_more_rounded, size: 18, color: K.heroText),
+              ]),
+            ),
+          ),
+        ),
+      ),
+      RoundIcon(Icons.chevron_right_rounded, dark: true, tooltip: 'Round after', onTap: () {
+        final (d, s) = stepRound(day, slot, 1);
+        onChanged(d, s);
+      }),
+    ]);
+  }
+}
+
 // ---------------------------------------------------------------- footer and loading
 
 class KNavItem {
@@ -886,6 +994,12 @@ class KNavBar extends StatelessWidget {
   final int index;
   final ValueChanged<int> onTap;
 
+  static const double _bar = 64;
+
+  /// How much of the screen the footer takes above the phone's own bottom
+  /// inset: the bar and the line along its top.
+  static const double height = _bar + 1;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -893,7 +1007,7 @@ class KNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 60,
+          height: _bar,
           child: Row(children: [
             for (var i = 0; i < items.length; i++)
               Expanded(
@@ -910,16 +1024,19 @@ class KNavBar extends StatelessWidget {
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          width: 52,
-                          height: 28,
+                          width: 56,
+                          height: 30,
                           decoration: BoxDecoration(color: i == index ? K.brand100 : Colors.transparent, borderRadius: BorderRadius.circular(999)),
-                          child: Icon(i == index ? items[i].iconOn : items[i].icon, size: 21, color: i == index ? K.brand600 : K.muted),
+                          child: Icon(i == index ? items[i].iconOn : items[i].icon, size: 22, color: i == index ? K.brand600 : K.muted),
                         ),
-                        const SizedBox(height: 3),
-                        Text(items[i].label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: T.tiny.copyWith(fontSize: 11.5, color: i == index ? K.ink : K.muted, fontWeight: i == index ? FontWeight.w700 : FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(items[i].label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: T.tiny.copyWith(fontSize: 12, color: i == index ? K.ink : K.muted, fontWeight: i == index ? FontWeight.w700 : FontWeight.w600)),
+                        ),
                       ]),
                     ),
                   ),
@@ -981,73 +1098,54 @@ class PageBody extends StatelessWidget {
   }
 }
 
-/// Dairee's mark, drawn in code from the same geometry as tools/brand.py: the
-/// letter D whose counter is a drop of milk, white on a blue tile. Drawn, not
-/// loaded, so it is there on the very first frame, at any size.
-class DaireeMark extends StatelessWidget {
-  const DaireeMark({super.key, this.size = 40, this.radius = 0.22});
+/// The app icon as a tile: the mark on white, with the icon's rounded corners,
+/// for the sign-in screen (like the Kuree tile).
+class DaireeIcon extends StatelessWidget {
+  const DaireeIcon({super.key, this.size = 84});
   final double size;
 
-  /// Corner rounding of the tile, as a share of its side.
-  final double radius;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: K.surface,
+          borderRadius: BorderRadius.circular(size * 0.25),
+          border: Border.all(color: K.border),
+          boxShadow: const [BoxShadow(color: Color(0x2E071C42), blurRadius: 30, spreadRadius: -12, offset: Offset(0, 14))],
+        ),
+        child: DaireeMark(size: size * 0.66),
+      );
+}
+
+/// Dairee's logo (the D with a sprout and a field), drawn from the vector
+/// shapes tools/brand/brand.py traced from the supplied artwork. Drawn, not
+/// loaded, so it is there on the very first frame, at any size.
+class DaireeMark extends StatelessWidget {
+  const DaireeMark({super.key, this.size = 40});
+  final double size;
 
   @override
   Widget build(BuildContext context) =>
-      Semantics(label: 'Dairee', image: true, child: CustomPaint(size: Size.square(size), painter: _MarkPainter(radius)));
+      Semantics(label: 'Dairee', image: true, child: CustomPaint(size: Size.square(size), painter: const _MarkPainter()));
 }
 
 class _MarkPainter extends CustomPainter {
-  _MarkPainter(this.radius);
-  final double radius;
+  const _MarkPainter();
 
-  static Path mark() {
-    const h = 540.0, a = 200.0, r = h / 2, w = a + r, stem = 150.0, corner = 36.0;
-    const dropR = 124.0, dropTop = 100.0, dropBottom = 110.0;
-    const x0 = (1024 - w) / 2, y0 = (1024 - h) / 2;
-    final d = Path()
-      ..moveTo(x0 + corner, y0)
-      ..lineTo(x0 + a, y0)
-      ..arcToPoint(const Offset(x0 + a, y0 + h), radius: const Radius.circular(r))
-      ..lineTo(x0 + corner, y0 + h)
-      ..quadraticBezierTo(x0, y0 + h, x0, y0 + h - corner)
-      ..lineTo(x0, y0 + corner)
-      ..quadraticBezierTo(x0, y0, x0 + corner, y0)
-      ..close();
-    const cx = x0 + stem + (w - stem) / 2 - 16;
-    const cy = y0 + h - dropBottom - dropR;
-    const tip = y0 + dropTop;
-    const dist = cy - tip;
-    final len = math.sqrt(dist * dist - dropR * dropR);
-    final px = cx + dropR * len / dist;
-    const py = cy - dropR * dropR / dist;
-    final vx = px - cx, vy = py - tip;
-    final n = math.sqrt(vx * vx + vy * vy);
-    final qx = (cx + px) / 2 + (vy / n) * len * 0.03;
-    final qy = (tip + py) / 2 - (vx / n) * len * 0.03;
-    final drop = Path()
-      ..moveTo(cx, tip)
-      ..quadraticBezierTo(qx, qy, px, py)
-      ..arcToPoint(Offset(2 * cx - px, py), radius: const Radius.circular(dropR), largeArc: true)
-      ..quadraticBezierTo(2 * cx - qx, qy, cx, tip)
-      ..close();
-    return Path()
-      ..fillType = PathFillType.evenOdd
-      ..addPath(d, Offset.zero)
-      ..addPath(drop, Offset.zero);
-  }
-
-  static final Path _mark = mark();
+  static final Path _main = daireeMain();
+  static final Path _light = daireeLight();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final k = size.width / 1024;
-    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(size.width * radius)), Paint()..color = K.blue);
     canvas.save();
-    canvas.scale(k);
-    canvas.drawPath(_mark, Paint()..color = Colors.white);
+    canvas.scale(size.width / 1000);
+    canvas.drawPath(_main, Paint()..color = const Color(daireeMainColour));
+    canvas.drawPath(_light, Paint()..color = const Color(daireeLightColour));
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _MarkPainter old) => old.radius != radius;
+  bool shouldRepaint(covariant _MarkPainter old) => false;
 }

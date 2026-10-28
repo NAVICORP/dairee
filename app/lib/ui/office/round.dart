@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api.dart';
+import '../../core/config.dart';
 import '../../core/farm.dart';
 import '../../core/format.dart';
 import '../../core/outbox.dart';
@@ -54,65 +55,36 @@ class RoundPage extends StatelessWidget {
 }
 
 /// Delivery staff with no office pages: the round and nothing else on screen.
+/// Their account is in the round's menu.
 class RoundOnly extends StatelessWidget {
   const RoundOnly({super.key, required this.farm});
   final FarmRole farm;
 
   @override
-  Widget build(BuildContext context) {
-    return RoundView(
-      farm: farm,
-      office: false,
-      account: () => showKSheet<void>(context, title: farm.staffName, builder: (ctx) {
-        final me = Me.instance;
-        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(farm.name, style: T.small),
-          const SizedBox(height: Sp.md),
-          if (me.farms.length > 1)
-            for (final f in me.farms.where((f) => f.id != farm.id))
-              Padding(
-                padding: const EdgeInsets.only(bottom: Sp.sm),
-                child: KButton(label: 'Switch to ${f.name}', kind: KButtonKind.secondary, expand: true, onPressed: () {
-                  Navigator.of(ctx).pop();
-                  me.switchTo(f);
-                }),
-              ),
-          KButton(
-              label: 'Sign out',
-              icon: Icons.logout_rounded,
-              kind: KButtonKind.secondary,
-              expand: true,
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                Me.instance.clear();
-                await Api.instance.signOut();
-              }),
-          const SizedBox(height: Sp.sm),
-          KButton(label: 'Delete my account', kind: KButtonKind.ghost, expand: true, onPressed: () {
-            Navigator.of(ctx).pop();
-            deleteMyAccount(context);
-          }),
-        ]);
-      }),
-    );
-  }
+  Widget build(BuildContext context) => RoundView(farm: farm, office: false, alone: true);
 }
 
 enum _Show { all, todo, done, paused }
 
+/// One round (a day and morning or evening), like a month of a chit in
+/// Kuree: the big card on top steps from round to round, the stops below.
 class RoundView extends StatefulWidget {
-  const RoundView({super.key, required this.farm, required this.office, this.account});
+  const RoundView({super.key, required this.farm, required this.office, this.alone = false, this.day, this.slot});
   final FarmRole farm;
   final bool office;
-  final VoidCallback? account;
+
+  /// The only screen this person has: their account lives in the menu.
+  final bool alone;
+  final DateTime? day;
+  final String? slot;
 
   @override
   State<RoundView> createState() => _RoundViewState();
 }
 
 class _RoundViewState extends State<RoundView> {
-  late DateTime day = widget.farm.today;
-  late String slot = DateTime.now().hour < 13 ? 'morning' : 'evening';
+  late DateTime day = widget.day ?? widget.farm.today;
+  late String slot = widget.slot ?? (DateTime.now().hour < 13 ? 'morning' : 'evening');
   List<Stop>? stops;
   bool locked = false;
   String? error;
@@ -177,12 +149,62 @@ class _RoundViewState extends State<RoundView> {
     }
   }
 
-  void _move(DateTime d) {
+  void _go(DateTime d, String sl) {
     setState(() {
-      day = d;
+      day = dayOnly(d);
+      slot = sl;
       stops = null;
+      open.clear();
     });
     _load();
+  }
+
+  String _roundLabel(DateTime d, String sl) => roundLabel(d, sl, widget.farm.today);
+
+  Future<void> _pickRound() async {
+    final r = await pickRound(context, day: day, slot: slot, today: widget.farm.today);
+    if (r != null && mounted) _go(r.$1, r.$2);
+  }
+
+  Future<void> _menu() async {
+    final f = widget.farm;
+    final waiting = Outbox.instance.waiting;
+    final pick = await showPicker<String>(context, title: _roundLabel(day, slot), options: [
+      const PickOption('round', 'Another round', sub: 'Morning or evening, any day', icon: Icons.event_outlined),
+      if (waiting > 0) PickOption('send', 'Send waiting ticks', sub: '$waiting made with no signal', icon: Icons.cloud_upload_outlined),
+      if (widget.office) ...[
+        PickOption('lock', locked ? 'Open this day' : 'Close this day',
+            sub: locked ? 'Allow ticks and changes again' : 'No more ticks or changes on ${dayInSentence(day, f.today)}',
+            icon: locked ? Icons.lock_open_rounded : Icons.lock_outline_rounded),
+        const PickOption('wall', 'Wall board', sub: 'Today\'s rounds, full screen, for the office', icon: Icons.tv_rounded),
+      ],
+      if (widget.alone) ...[
+        if (Me.instance.farms.length > 1) PickOption('farm', 'Switch farm', sub: f.name, icon: Icons.swap_horiz_rounded),
+        const PickOption('help', 'Help and support', icon: Icons.support_agent_rounded),
+        PickOption('out', 'Sign out', sub: f.staffName, icon: Icons.logout_rounded),
+        const PickOption('delete', 'Delete my account', icon: Icons.delete_outline_rounded),
+      ],
+    ]);
+    if (pick == null || !mounted) return;
+    switch (pick.value) {
+      case 'round':
+        await _pickRound();
+      case 'send':
+        await Outbox.instance.flush();
+        await _load();
+      case 'lock':
+        await _lock();
+      case 'wall':
+        await Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => WallBoard(farm: f)));
+      case 'farm':
+        await switchFarm(context, f);
+      case 'help':
+        await launchUrl(Uri.parse(kSupportUrl), mode: LaunchMode.externalApplication);
+      case 'out':
+        await signOut(context);
+      case 'delete':
+        await deleteMyAccount(context);
+    }
   }
 
   Future<void> _tick(Stop s, bool on) async {
@@ -259,23 +281,23 @@ class _RoundViewState extends State<RoundView> {
     // Delivery staff see their own stops by default: the numbers follow.
     final mineOnly = !widget.office && mine && anyMine;
     final scope = mineOnly ? (list ?? const <Stop>[]).where((s) => s.staffId == widget.farm.staffId).toList() : (list ?? const <Stop>[]);
+    final pushed = ModalRoute.of(context)?.canPop ?? false;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.office ? 'Round' : widget.farm.name),
+        titleSpacing: pushed ? Sp.xs : Sp.xl,
+        title: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(widget.farm.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.small.copyWith(color: K.blue, fontWeight: FontWeight.w800)),
+          Text('${slotName(slot)} round', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.h3.copyWith(fontSize: 17)),
+        ]),
         actions: [
           if (Outbox.instance.waiting > 0)
             Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.only(right: 2),
               child: Center(child: Pill.warn('${Outbox.instance.waiting} waiting', icon: Icons.cloud_off_rounded)),
             ),
-          if (widget.office) ...[
-            RoundIcon(locked ? Icons.lock_rounded : Icons.lock_open_rounded, tooltip: locked ? 'Open this day' : 'Close this day', onTap: _lock),
-            RoundIcon(Icons.tv_rounded,
-                tooltip: 'Wall board',
-                onTap: () => Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => WallBoard(farm: widget.farm)))),
-          ],
-          if (widget.account != null) RoundIcon(Icons.person_outline_rounded, tooltip: 'Account', onTap: widget.account),
-          const SizedBox(width: 8),
+          if (locked) const Padding(padding: EdgeInsets.only(right: 2), child: Center(child: Pill.grey('Closed', icon: Icons.lock_rounded))),
+          IconButton(tooltip: 'More', icon: const Icon(Icons.more_horiz_rounded), onPressed: _menu),
+          const SizedBox(width: Sp.xs),
         ],
       ),
       body: RefreshIndicator(
@@ -285,27 +307,14 @@ class _RoundViewState extends State<RoundView> {
           await _load();
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(Sp.page, 0, Sp.page, 32),
+          padding: const EdgeInsets.fromLTRB(Sp.page, Sp.xs, Sp.page, 120),
           children: [
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  DayStrip(day: day, today: widget.farm.today, onChanged: _move),
-                  const SizedBox(height: Sp.sm),
-                  KSegmented<String>(
-                    expand: true,
-                    items: const [('morning', 'Morning'), ('evening', 'Evening')],
-                    value: slot,
-                    onChanged: (v) {
-                      setState(() {
-                        slot = v;
-                        stops = null;
-                      });
-                      _load();
-                    },
-                  ),
-                  const SizedBox(height: Sp.md),
+                  _hero(scope),
+                  const SizedBox(height: Sp.md + 2),
                   if (error != null && list == null)
                     LoadFailed(message: error!, onRetry: _load)
                   else if (list == null)
@@ -315,16 +324,14 @@ class _RoundViewState extends State<RoundView> {
                       KSegmented<bool>(expand: true, items: const [(true, 'My stops'), (false, 'Everyone')], value: mine, onChanged: (v) => setState(() => mine = v)),
                       const SizedBox(height: Sp.md),
                     ],
-                    _summary(scope),
-                    const SizedBox(height: Sp.md),
                     if (locked) ...[const Notice('This day is closed. Nothing can be ticked or changed.', bad: false), const SizedBox(height: Sp.md)],
                     SearchField(controller: _q, hint: 'Search name, room or number', onChanged: (_) => setState(() {})),
-                    const SizedBox(height: Sp.sm),
+                    const SizedBox(height: Sp.sm + 2),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: KSegmented<_Show>(
                         items: [
-                          (_Show.all, 'All'),
+                          (_Show.all, 'All ${scope.length}'),
                           (_Show.todo, 'To do ${scope.where((s) => s.due && !s.delivered).length}'),
                           (_Show.done, 'Done ${scope.where((s) => s.delivered).length}'),
                           (_Show.paused, 'Paused ${scope.where((s) => s.paused).length}'),
@@ -347,28 +354,50 @@ class _RoundViewState extends State<RoundView> {
     );
   }
 
-  Widget _summary(List<Stop> list) {
+  /// The big card: which round, stepping back and forth like Kuree's months,
+  /// then the milk out, how many stops are done and what is left.
+  Widget _hero(List<Stop> list) {
     final due = list.where((s) => s.due).toList();
     final done = due.where((s) => s.delivered).length;
     final total = due.fold<num>(0, (a, s) => a + s.qty);
     final litresDone = due.where((s) => s.delivered).fold<num>(0, (a, s) => a + (s.deliveredQty ?? s.qty));
     final bottles = list.where((s) => s.delivered && s.hasBottles && !s.returned).length;
     final paused = list.where((s) => s.paused).length;
+    final loaded = stops != null;
+    final notes = [
+      if (bottles > 0) '$bottles ${bottles == 1 ? 'bottle' : 'bottles'} to collect',
+      if (paused > 0) '$paused paused',
+      if (bottles == 0 && paused == 0) loaded && due.isNotEmpty && done == due.length ? 'Every stop delivered' : 'No bottles out, nobody paused',
+    ];
     return HeroCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('${slotName(slot)} round, ${dayInSentence(day, widget.farm.today)}', style: T.small.copyWith(color: K.heroText)),
-        const SizedBox(height: 6),
-        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('$done', style: T.amount),
-          Padding(padding: const EdgeInsets.only(bottom: 3, left: 6), child: Text('of ${due.length} delivered', style: T.body.copyWith(color: K.heroText))),
-        ]),
-        const SizedBox(height: 12),
+        RoundNav(day: day, slot: slot, today: widget.farm.today, onChanged: _go),
+        const SizedBox(height: Sp.lg),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(loaded ? litres(litresDone) : '...', style: T.amount),
+        ),
+        const SizedBox(height: Sp.xs),
+        Text(loaded ? 'of ${litres(total)} delivered on ${dateLabel(day)}' : dateLabel(day),
+            style: T.small.copyWith(color: K.heroText, fontWeight: FontWeight.w600)),
+        const SizedBox(height: Sp.md + 2),
         ProgressLine(due.isEmpty ? 0 : done / due.length),
-        const SizedBox(height: 14),
-        Wrap(spacing: 22, runSpacing: 10, children: [
-          Stat('${litres(litresDone)} of ${litres(total)}', 'Milk out', dark: true),
-          Stat('$bottles', 'Bottles to collect', dark: true),
-          Stat('$paused', 'Paused', dark: true),
+        const SizedBox(height: Sp.md),
+        Row(children: [
+          Expanded(
+            child: Text('$done of ${due.length} delivered', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label.copyWith(color: Colors.white)),
+          ),
+          const SizedBox(width: Sp.sm),
+          Text(due.length - done > 0 ? '${due.length - done} to go' : (due.isEmpty ? 'No stops' : 'All done'), style: T.small.copyWith(color: K.heroText)),
+        ]),
+        const SizedBox(height: Sp.md),
+        Container(height: 1, color: const Color(0x1FFFFFFF)),
+        const SizedBox(height: Sp.md),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.local_drink_outlined, size: 15, color: K.heroText)),
+          const SizedBox(width: Sp.sm),
+          Expanded(child: Text(loaded ? notes.join(', ') : 'Loading the stops', style: T.small.copyWith(color: K.heroText))),
         ]),
       ]),
     );

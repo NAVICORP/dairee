@@ -106,11 +106,9 @@ class _CustomersPageState extends State<CustomersPage> {
     }).toList();
     final canEdit = widget.farm.can('customers');
     return Scaffold(
-      appBar: AppBar(title: const Text('Customers'), actions: [
-        if (canEdit) RoundIcon(Icons.person_add_alt_1_rounded, tooltip: 'Add a customer', onTap: _add),
-        const SizedBox(width: 8),
-      ]),
-      body: PageBody(onRefresh: _load, children: [
+      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('Customers')),
+      floatingActionButton: canEdit && (all?.isNotEmpty ?? false) ? KFab(label: 'New customer', icon: Icons.add_rounded, onPressed: _add) : null,
+      body: PageBody(onRefresh: _load, bottom: 112, children: [
         SearchField(controller: _q, hint: 'Search name, room or number', onChanged: (_) => setState(() {})),
         const SizedBox(height: Sp.sm),
         Align(
@@ -134,7 +132,7 @@ class _CustomersPageState extends State<CustomersPage> {
           EmptyState(
             icon: Icons.people_outline_rounded,
             text: 'No customers yet. Add the first one, with how much milk they take and on which round.',
-            action: canEdit ? KButton(label: 'Add a customer', icon: Icons.person_add_alt_1_rounded, onPressed: _add) : null,
+            action: canEdit ? KButton(label: 'Add a customer', icon: Icons.add_rounded, onPressed: _add) : null,
           )
         else if (shown.isEmpty)
           const EmptyState(icon: Icons.search_off_rounded, text: 'Nobody matches.')
@@ -328,11 +326,11 @@ class _CustomerPageState extends State<CustomerPage> {
     return Scaffold(
       appBar: AppBar(title: Text('${c['name']}'), actions: [
         if (canEdit)
-          RoundIcon(Icons.edit_outlined, tooltip: 'Edit', onTap: () async {
+          IconButton(icon: const Icon(Icons.edit_outlined), tooltip: 'Edit', onPressed: () async {
             await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CustomerEditor(farm: f, customer: c)));
             _load();
           }),
-        const SizedBox(width: 8),
+        const SizedBox(width: Sp.xs),
       ]),
       body: PageBody(onRefresh: _load, children: [
         KCard(

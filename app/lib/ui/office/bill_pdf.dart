@@ -18,8 +18,8 @@ Future<void> shareBillPdf({
   final regular = pw.Font.ttf(await rootBundle.load('assets/fonts/Manrope-500.ttf'));
   final bold = pw.Font.ttf(await rootBundle.load('assets/fonts/Manrope-700.ttf'));
   final title = pw.Font.ttf(await rootBundle.load('assets/fonts/BricolageGrotesque-600.ttf'));
-  const blue = PdfColor.fromInt(0xFF1F5FD6);
-  const deep = PdfColor.fromInt(0xFF0A1F44);
+  const blue = PdfColor.fromInt(0xFF1064D9);
+  const deep = PdfColor.fromInt(0xFF071C42);
   const muted = PdfColor.fromInt(0xFF5A6782);
   const line = PdfColor.fromInt(0xFFE0E6F0);
   String m(Object? v) => money(toNum(v), currency);

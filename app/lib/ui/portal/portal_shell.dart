@@ -126,8 +126,19 @@ class _HomeState extends State<_Home> {
     // What has happened so far; days still to come are on the Changes tab.
     final today = parseDay(h['today']) ?? dayOnly(DateTime.now());
     final days = (m['days'] as List? ?? const []).whereType<Map>().where((d) => !(parseDay(d['day'])?.isAfter(today) ?? false)).toList();
+    final paused = toNum(m['paused_days']).toInt();
+    final usual = [
+      if (toNum(c['morning_quantity']) > 0) 'morning ${litres(c['morning_quantity'])}',
+      if (toNum(c['evening_quantity']) > 0) 'evening ${litres(c['evening_quantity'])}',
+    ];
     return Scaffold(
-      appBar: AppBar(title: Text('${farm['name']}')),
+      appBar: AppBar(
+        titleSpacing: Sp.xl,
+        title: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${farm['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.small.copyWith(color: K.blue, fontWeight: FontWeight.w800)),
+          Text('${c['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.h3.copyWith(fontSize: 17)),
+        ]),
+      ),
       body: PageBody(
         onRefresh: () async {
           await widget.onRefresh();
@@ -135,42 +146,64 @@ class _HomeState extends State<_Home> {
         },
         children: [
           HeroCard(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${c['name']}', style: T.h1.copyWith(color: Colors.white)),
-                  if (placeOf(c).isNotEmpty) Text(placeOf(c), style: T.small.copyWith(color: K.heroText)),
-                  const SizedBox(height: 12),
-                  if (toNum(c['morning_quantity']) > 0) Text('Morning ${litres(c['morning_quantity'])}', style: T.bodyStrong.copyWith(color: Colors.white)),
-                  if (toNum(c['evening_quantity']) > 0) Text('Evening ${litres(c['evening_quantity'])}', style: T.bodyStrong.copyWith(color: Colors.white)),
-                ]),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                RoundIcon(Icons.chevron_left_rounded, dark: true, tooltip: 'Month before', onTap: () => _go(-1)),
+                Expanded(
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.calendar_month_outlined, size: 17, color: K.heroText),
+                    const SizedBox(width: 7),
+                    Flexible(child: Text(monthLabel(showing), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label.copyWith(color: K.heroText, fontSize: 14.5))),
+                  ]),
+                ),
+                RoundIcon(Icons.chevron_right_rounded, dark: true, tooltip: 'Month after', onTap: () => _go(1)),
+              ]),
+              const SizedBox(height: Sp.lg),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(litres(m['delivered_liters']), style: T.amount),
               ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                child: QrImageView(data: 'dairee-customer:${c['qr_token']}', size: 84, padding: EdgeInsets.zero),
-              ),
+              const SizedBox(height: Sp.xs),
+              Text('delivered on ${m['delivered_days'] ?? 0} ${toNum(m['delivered_days']) == 1 ? 'day' : 'days'}${paused > 0 ? ', $paused ${paused == 1 ? 'day' : 'days'} paused' : ''}',
+                  style: T.small.copyWith(color: K.heroText, fontWeight: FontWeight.w600)),
+              const SizedBox(height: Sp.md),
+              Container(height: 1, color: const Color(0x1FFFFFFF)),
+              const SizedBox(height: Sp.md),
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.water_drop_outlined, size: 15, color: K.heroText)),
+                const SizedBox(width: Sp.sm),
+                Expanded(
+                  child: Text(usual.isEmpty ? 'No milk set for you yet' : 'Usually ${usual.join(', ')}', style: T.small.copyWith(color: K.heroText)),
+                ),
+              ]),
             ]),
           ),
-          const SizedBox(height: Sp.md),
+          const SizedBox(height: Sp.md + 2),
           Row(children: [
             Expanded(child: StatTile(money(toNum(acc['outstanding']), cur), 'To pay on bills', tone: toNum(acc['outstanding']) > 0 ? K.blue : null)),
             const SizedBox(width: Sp.sm),
             Expanded(child: StatTile(money(toNum(acc['credit']), cur), 'Your credit')),
           ]),
-          SectionTitle('Deliveries', trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-            RoundIcon(Icons.chevron_left_rounded, size: 30, tooltip: 'Month before', onTap: () => _go(-1)),
-            Text(monthLabel(showing), style: T.label),
-            RoundIcon(Icons.chevron_right_rounded, size: 30, tooltip: 'Month after', onTap: () => _go(1)),
-          ])),
-          Row(children: [
-            Expanded(child: StatTile(litres(m['delivered_liters']), 'Delivered')),
-            const SizedBox(width: Sp.sm),
-            Expanded(child: StatTile('${m['delivered_days'] ?? 0}', 'Days')),
-            const SizedBox(width: Sp.sm),
-            Expanded(child: StatTile('${m['paused_days'] ?? 0}', 'Paused days')),
-          ]),
-          const SizedBox(height: Sp.sm),
+          const SizedBox(height: Sp.md + 2),
+          KCard(
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: K.border)),
+                child: QrImageView(data: 'dairee-customer:${c['qr_token']}', size: 76, padding: EdgeInsets.zero),
+              ),
+              const SizedBox(width: Sp.md + 2),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Your code', style: T.h3),
+                  const SizedBox(height: 2),
+                  Text(placeOf(c).isEmpty ? 'Show it to the farm to find you fast.' : '${placeOf(c)}. Show it to the farm to find you fast.', style: T.small),
+                ]),
+              ),
+            ]),
+          ),
+          const SectionTitle('Deliveries'),
           if (days.isEmpty)
             const KCard(child: Text('Nothing this month yet.', style: T.small))
           else
@@ -235,7 +268,7 @@ class _PaymentState extends State<_Payment> {
     final d = data;
     String m(Object? v) => money(toNum(v), widget.currency);
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment')),
+      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('Payment')),
       body: d == null
           ? (error != null ? LoadFailed(message: error!, onRetry: _load) : const Loading())
           : PageBody(onRefresh: _load, children: [
@@ -501,7 +534,7 @@ class _ChangesState extends State<_Changes> {
     final canAsk = farm['customer_requests'] == true;
     final paused = pauses.isNotEmpty || dates.isNotEmpty;
     return Scaffold(
-      appBar: AppBar(title: const Text('Changes')),
+      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('Changes')),
       body: PageBody(onRefresh: widget.onChanged, children: [
         Wrap(spacing: Sp.sm, runSpacing: Sp.sm, children: [
           if (canPause) KButton(label: 'Pause my milk', icon: Icons.pause_rounded, small: true, onPressed: _pause),
@@ -582,7 +615,7 @@ class _Settings extends StatelessWidget {
     final c = Map<String, dynamic>.from(home['customer'] as Map);
     final farm = Map<String, dynamic>.from(home['farm'] as Map);
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(titleSpacing: Sp.xl, title: const Text('Settings')),
       body: PageBody(children: [
         const SectionTitle('Profile', top: 4),
         KGroup(children: [

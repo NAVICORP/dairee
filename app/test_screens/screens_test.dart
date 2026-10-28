@@ -229,8 +229,11 @@ Future<void> shell(WidgetTester tester, [String who = 'asha']) async {
   await settle(tester);
 }
 
-/// The morning round, whatever the time of day the pictures are made.
-Future<void> morning(WidgetTester tester) => tap(tester, find.text('Morning'));
+/// The morning round, whatever the time of day the pictures are made: in
+/// the evening the round opens on the evening, one step after the morning.
+Future<void> morning(WidgetTester tester) async {
+  if (find.text('Evening, today').evaluate().isNotEmpty) await tap(tester, find.byTooltip('Round before'));
+}
 
 Map<String, dynamic> row(String table, String key, String value) =>
     Map<String, dynamic>.from(((server.fx['tables'] as Map)[table] as List).cast<Map>().firstWhere((r) => '${r[key]}' == value));
@@ -285,10 +288,13 @@ void main() {
   testWidgets('round, office', (tester) async {
     phone(tester);
     await shell(tester);
-    await morning(tester);
+    await shot(tester, '09-today');
+    await tap(tester, find.text('Morning round'));
     await shot(tester, '10-round');
     await tap(tester, find.text('Lake View'));
     await shot(tester, '11-round-stops');
+    await tap(tester, find.byTooltip('More'));
+    await shot(tester, '14-round-menu');
   }, skip: skip);
 
   testWidgets('round, delivery', (tester) async {
@@ -301,7 +307,7 @@ void main() {
   testWidgets('packing', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.text('Packing'));
+    await tap(tester, find.textContaining('Packing for'));
     await shot(tester, '13-packing');
   }, skip: skip);
 
@@ -349,6 +355,7 @@ void main() {
   testWidgets('pause and stop', (tester) async {
     phone(tester);
     await shell(tester);
+    await tap(tester, find.text('Profile'));
     await tap(tester, find.text('Pause / Stop'));
     await shot(tester, '30-changes');
   }, skip: skip);
@@ -356,9 +363,9 @@ void main() {
   testWidgets('payments', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.text('More'));
-    await shot(tester, '40-more');
-    await tap(tester, find.text('Payments'));
+    await tap(tester, find.text('Profile'));
+    await shot(tester, '40-profile');
+    await tap(tester, find.text('To collect'));
     await shot(tester, '41-payments');
     await tap(tester, find.text('Bills'));
     await shot(tester, '42-bills');
@@ -382,7 +389,7 @@ void main() {
   testWidgets('reports', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.text('More'));
+    await tap(tester, find.text('Profile'));
     await tap(tester, find.text('Reports'));
     await shot(tester, '50-reports');
     await tap(tester, find.text('Money'));
@@ -392,7 +399,7 @@ void main() {
   testWidgets('herd', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.text('More'));
+    await tap(tester, find.text('Profile'));
     await tap(tester, find.text('Cows'));
     await shot(tester, '60-herd');
   }, skip: skip);
@@ -415,7 +422,7 @@ void main() {
   testWidgets('staff', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.text('More'));
+    await tap(tester, find.text('Profile'));
     await tap(tester, find.text('Staff'));
     await shot(tester, '70-staff');
   }, skip: skip);
@@ -430,7 +437,7 @@ void main() {
   testWidgets('settings', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.text('More'));
+    await tap(tester, find.text('Profile'));
     await tap(tester, find.text('Settings'));
     await shot(tester, '80-settings');
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -1400));
@@ -471,11 +478,12 @@ void main() {
   }, skip: skip);
 
   // The web app on a computer: the side bar instead of the footer.
-  testWidgets('web, round', (tester) async {
+  testWidgets('web, today', (tester) async {
     desktop(tester);
     await shell(tester);
-    await morning(tester);
-    await shot(tester, 'w1-round');
+    await shot(tester, 'w1-today');
+    await tap(tester, find.text('Morning round'));
+    await shot(tester, 'w5-round');
   }, skip: skip);
 
   testWidgets('web, customers', (tester) async {
@@ -488,7 +496,7 @@ void main() {
   testWidgets('web, payments', (tester) async {
     desktop(tester);
     await shell(tester);
-    await tap(tester, find.text('Payments'));
+    await tap(tester, find.text('To collect'));
     await shot(tester, 'w3-payments');
   }, skip: skip);
 

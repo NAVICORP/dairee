@@ -77,16 +77,19 @@ class _HerdPageState extends State<HerdPage> {
     final produced = (week ?? const []).whereType<Map>().fold<num>(0, (a, d) => a + toNum(d['produced']));
     final delivered = (week ?? const []).whereType<Map>().fold<num>(0, (a, d) => a + toNum(d['delivered']));
     return Scaffold(
-      appBar: AppBar(title: const Text('Cows'), actions: [
-        if (canEdit)
-          RoundIcon(Icons.add_rounded, tooltip: 'Add a cow', onTap: () async {
-            final made = await editCow(context);
-            await _load();
-            if (made != null && mounted) _open(made);
-          }),
-        const SizedBox(width: 8),
-      ]),
-      body: PageBody(onRefresh: _load, children: [
+      appBar: AppBar(title: const Text('Cows')),
+      floatingActionButton: canEdit
+          ? KFab(
+              label: 'New cow',
+              icon: Icons.add_rounded,
+              onPressed: () async {
+                final made = await editCow(context);
+                await _load();
+                if (made != null && mounted) _open(made);
+              },
+            )
+          : null,
+      body: PageBody(onRefresh: _load, bottom: 112, children: [
         if (error != null && cows == null)
           LoadFailed(message: error!, onRetry: _load)
         else if (cows == null)
@@ -282,11 +285,11 @@ class _CowPageState extends State<CowPage> {
     return Scaffold(
       appBar: AppBar(title: Text(c == null ? 'Cow' : '${c['tag_number']}${(c['name'] ?? '') == '' ? '' : ', ${c['name']}'}'), actions: [
         if (canEdit && c != null)
-          RoundIcon(Icons.edit_outlined, tooltip: 'Edit', onTap: () async {
+          IconButton(icon: const Icon(Icons.edit_outlined), tooltip: 'Edit', onPressed: () async {
             await editCow(context, cow: c);
             _load();
           }),
-        const SizedBox(width: 8),
+        const SizedBox(width: Sp.xs),
       ]),
       body: c == null
           ? const Loading()
