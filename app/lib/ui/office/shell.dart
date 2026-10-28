@@ -158,7 +158,7 @@ class _SideBar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 12, 14),
             child: Row(children: [
-              ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset('assets/brand/icon.png', width: 32, height: 32)),
+              const DaireeMark(size: 32, radius: 0.3),
               const SizedBox(width: 10),
               Expanded(child: Text(farm.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: T.h3)),
             ]),

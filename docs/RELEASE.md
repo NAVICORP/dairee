@@ -2,9 +2,9 @@
 
 ## 1. The server (once)
 
-1. **SkAuth knows Dairee.** On the SkAuth service in Dokploy, add Dairee to `SKAUTH_APPS`:
+1. **SkAuth knows Dairee (optional).** Sign-in works without it. Listing Dairee in `SKAUTH_APPS` on the SkAuth service (Dokploy, Raw compose) brands its sign-in emails as Dairee:
    `{"id":"dairee","name":"Dairee","site":"https://dairee.skifi.co","api":"https://dairee.skifi.co","color":"#1F5FD6"}`
-   and redeploy SkAuth.
+   then redeploy SkAuth.
 2. **The image is public.** After the first Server run on `main`, open GitHub > NAVICORP > Packages > `dairee` > Package settings and set the visibility to Public (or give Dokploy a token that can read it).
 3. **Dokploy compose.** New compose `dairee` from GitHub `NAVICORP/dairee`, branch `main`, compose path `./deploy/docker-compose.yml`. Domain `dairee.skifi.co` to service `site`, port 8000, HTTPS on. Deploy.
 4. **DNS.** On Cloudflare, skifi.co: an A record `dairee` to the VPS (179.198.218.204).

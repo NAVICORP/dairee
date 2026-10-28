@@ -980,3 +980,74 @@ class PageBody extends StatelessWidget {
     return onRefresh == null ? list : RefreshIndicator(onRefresh: onRefresh!, color: K.blue, child: list);
   }
 }
+
+/// Dairee's mark, drawn in code from the same geometry as tools/brand.py: the
+/// letter D whose counter is a drop of milk, white on a blue tile. Drawn, not
+/// loaded, so it is there on the very first frame, at any size.
+class DaireeMark extends StatelessWidget {
+  const DaireeMark({super.key, this.size = 40, this.radius = 0.22});
+  final double size;
+
+  /// Corner rounding of the tile, as a share of its side.
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) =>
+      Semantics(label: 'Dairee', image: true, child: CustomPaint(size: Size.square(size), painter: _MarkPainter(radius)));
+}
+
+class _MarkPainter extends CustomPainter {
+  _MarkPainter(this.radius);
+  final double radius;
+
+  static Path mark() {
+    const h = 540.0, a = 200.0, r = h / 2, w = a + r, stem = 150.0, corner = 36.0;
+    const dropR = 124.0, dropTop = 100.0, dropBottom = 110.0;
+    const x0 = (1024 - w) / 2, y0 = (1024 - h) / 2;
+    final d = Path()
+      ..moveTo(x0 + corner, y0)
+      ..lineTo(x0 + a, y0)
+      ..arcToPoint(const Offset(x0 + a, y0 + h), radius: const Radius.circular(r))
+      ..lineTo(x0 + corner, y0 + h)
+      ..quadraticBezierTo(x0, y0 + h, x0, y0 + h - corner)
+      ..lineTo(x0, y0 + corner)
+      ..quadraticBezierTo(x0, y0, x0 + corner, y0)
+      ..close();
+    const cx = x0 + stem + (w - stem) / 2 - 16;
+    const cy = y0 + h - dropBottom - dropR;
+    const tip = y0 + dropTop;
+    const dist = cy - tip;
+    final len = math.sqrt(dist * dist - dropR * dropR);
+    final px = cx + dropR * len / dist;
+    const py = cy - dropR * dropR / dist;
+    final vx = px - cx, vy = py - tip;
+    final n = math.sqrt(vx * vx + vy * vy);
+    final qx = (cx + px) / 2 + (vy / n) * len * 0.03;
+    final qy = (tip + py) / 2 - (vx / n) * len * 0.03;
+    final drop = Path()
+      ..moveTo(cx, tip)
+      ..quadraticBezierTo(qx, qy, px, py)
+      ..arcToPoint(Offset(2 * cx - px, py), radius: const Radius.circular(dropR), largeArc: true)
+      ..quadraticBezierTo(2 * cx - qx, qy, cx, tip)
+      ..close();
+    return Path()
+      ..fillType = PathFillType.evenOdd
+      ..addPath(d, Offset.zero)
+      ..addPath(drop, Offset.zero);
+  }
+
+  static final Path _mark = mark();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final k = size.width / 1024;
+    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(size.width * radius)), Paint()..color = K.blue);
+    canvas.save();
+    canvas.scale(k);
+    canvas.drawPath(_mark, Paint()..color = Colors.white);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _MarkPainter old) => old.radius != radius;
+}

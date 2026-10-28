@@ -102,6 +102,10 @@ jobs:
         env:
           DOKPLOY_TOKEN: ${{ secrets.DOKPLOY_TOKEN }}
         run: |
+          if [ -z "$DOKPLOY_TOKEN" ]; then
+            echo "::notice title=Redeploy::Add the DOKPLOY_TOKEN secret to redeploy after every new image. Until then, Dokploy deploys on push itself."
+            exit 0
+          fi
           for id in ${{ vars.DOKPLOY_COMPOSE_IDS }}; do
             curl -fsS -X POST "${{ vars.DOKPLOY_URL }}/api/compose.deploy" \
               -H "x-api-key: $DOKPLOY_TOKEN" -H "Content-Type: application/json" \

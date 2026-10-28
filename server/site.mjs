@@ -331,10 +331,17 @@ async function handle(req, res) {
   return notFound(req, res);
 }
 
-createServer((req, res) => {
+const server = createServer((req, res) => {
   handle(req, res).catch((e) => {
     console.error('request failed', req.url, e);
     if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain' });
     res.end('Something went wrong.');
   });
-}).listen(PORT, () => console.log(`dairee site on :${PORT}, api ${API}, app ${APP}`));
+});
+// Traefik keeps connections to us open for up to 90 seconds. Node closes an
+// idle one after 5 by default, and a request Traefik sends down a connection
+// at the moment Node closes it comes back as a 502 (seen on the first open of
+// the web app, when many files load at once). So Node waits longer than Traefik.
+server.keepAliveTimeout = 120_000;
+server.headersTimeout = 125_000;
+server.listen(PORT, () => console.log(`dairee site on :${PORT}, api ${API}, app ${APP}`));
