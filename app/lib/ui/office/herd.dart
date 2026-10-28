@@ -371,7 +371,9 @@ class _CowPageState extends State<CowPage> {
                   for (final e in events)
                     KRow(
                       title: '${e['summary']}',
-                      sub: '${stamp(DateTime.parse('${e['occurred_at']}'))}${e['actor'] == null ? '' : ', ${e['actor']}'}',
+                      // Records are about a day; only changes to the cow itself carry a time.
+                      sub: '${e['kind'] == 'cows' ? stamp(DateTime.parse('${e['occurred_at']}')) : dayLabel(DateTime.parse('${e['occurred_at']}').toLocal())}'
+                          '${e['actor'] == null ? '' : ', ${e['actor']}'}',
                     ),
                 ]),
               if (canEdit) ...[

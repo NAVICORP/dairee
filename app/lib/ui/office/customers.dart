@@ -343,7 +343,7 @@ class _CustomerPageState extends State<CustomerPage> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${c['name']}', style: T.h2),
                 if (placeOf(c).isNotEmpty) Text(placeOf(c), style: T.small),
-                Text('${prettyPhone(c['phone'] as String?)}  |  ${typeLabel('${c['customer_type'] ?? ''}')}', style: T.small),
+                Text('${prettyPhone(c['phone'] as String?)}${(c['customer_type'] ?? 'home') == 'home' ? '' : ', ${typeLabel('${c['customer_type']}').toLowerCase()}'}', style: T.small),
               ]),
             ),
             RoundIcon(Icons.call_rounded, tooltip: 'Call', onTap: () => launchUrl(Uri.parse('tel:+${c['phone']}'))),
