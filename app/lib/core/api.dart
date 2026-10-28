@@ -308,10 +308,9 @@ class Api {
     await _take(r.json);
   }
 
-  /// A new password for the signed-in person (after a temporary one).
+  /// A password of the signed-in person's own choosing, for their email.
   Future<void> setPassword(String password) async {
     await _raw('PUT', '/auth/v1/user', body: {'password': password});
-    await rpc('password_changed');
   }
 
   Future<void> _take(dynamic j) async {
@@ -475,6 +474,8 @@ class Portal {
   /// password work at more than one; otherwise null, and the portal is open.
   Future<List<Map<String, dynamic>>?> signIn(String phone, String password, {String? farm}) async {
     final j = await _call('portal_sign_in', {'phone': phone, 'password': password, 'farm': farm});
+    // A wrong password comes back as an answer, so the server's count of tries sticks.
+    if (j is Map && j['error'] != null) throw ApiError('${j['error']}', status: 400);
     if (j is Map && j['choose'] is List) {
       return (j['choose'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     }

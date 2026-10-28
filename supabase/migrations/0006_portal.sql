@@ -43,14 +43,14 @@ $$;
 
 -- ---------------------------------------------------------------- the office hands out passwords
 
--- The first four letters of the name and the first four digits of the mobile
--- number. Guessable by anyone who knows both, which is acceptable only because
--- it is temporary: the portal asks for a new password before showing anything.
-create or replace function public.temporary_password(p_name text, p_phone text) returns text
-language sql immutable set search_path = '' as $$
+-- The first four letters of the name and four random digits: easy to read
+-- out and retype from a chat, and not something a neighbour could work out
+-- from the name and number (with the lockout, ten thousand guesses are too
+-- many). Temporary: the portal asks for a new password before showing anything.
+create or replace function public.temporary_password(p_name text) returns text
+language sql volatile set search_path = '' as $$
   select initcap(rpad(left(regexp_replace(coalesce(p_name, ''), '[^A-Za-z]', '', 'g'), 4), 4, 'x'))
-      || left(case when length(d) > 10 then right(d, 10) else d end, 4)
-  from (select regexp_replace(coalesce(p_phone, ''), '[^0-9]', '', 'g') as d) x;
+      || lpad(((('x' || encode(extensions.gen_random_bytes(4), 'hex'))::bit(32)::bigint & 2147483647) % 10000)::text, 4, '0');
 $$;
 
 create or replace function public.issue_customer_password(customer_id uuid) returns jsonb
@@ -60,7 +60,7 @@ begin
   if not public.staff_can('customers') then
     raise exception 'You need the Customers page to give out passwords.' using errcode = '42501';
   end if;
-  pw := public.temporary_password(c.name, c.phone);
+  pw := public.temporary_password(c.name);
   insert into public.customer_logins (customer_id, farm_id, password_hash, is_temporary, issued_at, issued_by)
   values (c.id, c.farm_id, extensions.crypt(pw, extensions.gen_salt('bf', 8)), true, now(), public.my_name())
   on conflict on constraint customer_logins_pkey do update set password_hash = excluded.password_hash, is_temporary = true,
@@ -118,7 +118,7 @@ end $$;
 create or replace function public.portal_sign_in(phone text, password text, farm text default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
-  ph text := public.phone_digits(portal_sign_in.phone); r record; hits jsonb := '[]'; n int := 0;
+  ph text := public.phone_digits(portal_sign_in.phone); r record; hits jsonb := '[]'; n int := 0; locked int := 0;
   hit_customer uuid; hit_farm uuid; hit_temp boolean; t text;
 begin
   if ph is null or coalesce(password, '') = '' then
@@ -132,7 +132,7 @@ begin
     where c.phone = ph and c.status = 'active'
       and (farm is null or f.slug = lower(btrim(farm)))
   loop
-    if r.locked_until is not null and r.locked_until > now() then continue; end if;
+    if r.locked_until is not null and r.locked_until > now() then locked := locked + 1; continue; end if;
     if r.password_hash = extensions.crypt(password, r.password_hash) then
       n := n + 1;
       hit_customer := r.customer_id; hit_farm := r.farm_id; hit_temp := r.is_temporary;
@@ -144,9 +144,12 @@ begin
        where l.customer_id = r.customer_id;
     end if;
   end loop;
+  -- A wrong password is answered, not raised: raising would undo the count of
+  -- failed tries above, and the lockout would never start.
   if n = 0 then
-    raise exception 'That number and password do not match. Check them, or ask the farm for a new password.'
-      using errcode = '28P01';
+    return jsonb_build_object('error', case when locked > 0
+      then 'Too many tries. Wait 15 minutes, or ask the farm for a new password.'
+      else 'That number and password do not match. Check them, or ask the farm for a new password.' end);
   end if;
   if n > 1 then
     -- The same number and password at two farms: the portal asks which one.

@@ -53,6 +53,11 @@ begin
     raise exception 'That day is closed. Ask the office to open it.' using errcode = '22023';
   end if;
   if day > today then raise exception 'That round has not happened yet.' using errcode = '22023'; end if;
+  -- A billed day stays as billed, so the bill and the round never disagree.
+  if exists (select 1 from public.bills b where b.customer_id = c.id and day between b.period_from and b.period_to) then
+    raise exception 'That day is on a bill already. To correct it, delete the bill, make the change and make the bill again.'
+      using errcode = '22023';
+  end if;
   if not public.staff_can('deliveries') and day < today - 1 then
     raise exception 'Ask the office to correct older rounds.' using errcode = '42501';
   end if;

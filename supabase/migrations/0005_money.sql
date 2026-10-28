@@ -121,7 +121,9 @@ create or replace function public.recompute_customer_credit(p_customer uuid) ret
 language plpgsql security definer set search_path = '' as $$
 declare pool numeric := 0; b record; due numeric; take numeric; f uuid;
 begin
-  select c.farm_id into f from public.customers c where c.id = p_customer;
+  -- One recount per customer at a time: two payments saved at the same moment
+  -- would each count without the other and the last to finish would win.
+  select c.farm_id into f from public.customers c where c.id = p_customer for no key update;
   if f is null then return 0; end if;
   select coalesce(sum(p.amount), 0) into pool from public.payments p
    where p.customer_id = p_customer and p.bill_id is null;
@@ -254,14 +256,12 @@ alter table public.payments enable row level security;
 alter table public.customer_credit enable row level security;
 
 -- Money is refused outright without the Payments page: a figure glimpsed is a figure known.
+-- The price feeds every bill, so it is Payments too, even on the Settings page.
 create policy prices_read on public.milk_prices for select to authenticated
-  using (farm_id = (select public.current_farm_id())
-         and ((select public.staff_can('payments')) or (select public.staff_can('settings'))));
+  using (farm_id = (select public.current_farm_id()) and (select public.staff_can('payments')));
 create policy prices_write on public.milk_prices for all to authenticated
-  using (farm_id = (select public.current_farm_id())
-         and ((select public.staff_can('payments')) or (select public.staff_can('settings'))))
-  with check (farm_id = (select public.current_farm_id())
-         and ((select public.staff_can('payments')) or (select public.staff_can('settings'))));
+  using (farm_id = (select public.current_farm_id()) and (select public.staff_can('payments')))
+  with check (farm_id = (select public.current_farm_id()) and (select public.staff_can('payments')));
 
 create policy customer_prices_read on public.customer_prices for select to authenticated
   using (farm_id = (select public.current_farm_id()) and (select public.staff_can('payments')));

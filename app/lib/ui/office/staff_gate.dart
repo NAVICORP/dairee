@@ -62,7 +62,6 @@ class _StaffGateState extends State<StaffGate> {
     }
     final farm = Me.instance.farm;
     if (farm == null) return StartFarm(onMade: _load);
-    if (farm.mustChangePassword) return SetPassword(onDone: _load);
     if (farm.nothing) return _NoPages(farm: farm, onRetry: _load);
     return FarmShell(key: ValueKey('${farm.id}|${farm.isAdmin}|${farm.canDeliver}|${farm.canCare}|${farm.permissions.join(',')}'), farm: farm, reload: _load);
   }
@@ -175,10 +174,10 @@ class _StartFarmState extends State<StartFarm> {
   }
 }
 
-/// A temporary password from the office: choose your own before anything else.
+/// A password for the signed-in person's email, so they can sign in without
+/// waiting for a code. Nobody else ever sets it.
 class SetPassword extends StatefulWidget {
-  const SetPassword({super.key, required this.onDone});
-  final Future<void> Function() onDone;
+  const SetPassword({super.key});
 
   @override
   State<SetPassword> createState() => _SetPasswordState();
@@ -212,7 +211,9 @@ class _SetPasswordState extends State<SetPassword> {
     });
     try {
       await Api.instance.setPassword(_a.text);
-      await widget.onDone();
+      if (!mounted) return;
+      toast(context, 'Password saved');
+      Navigator.of(context).pop();
     } on ApiError catch (e) {
       if (mounted) setState(() => error = e.message);
     } finally {
@@ -223,6 +224,7 @@ class _SetPasswordState extends State<SetPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Choose a password')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -230,10 +232,9 @@ class _SetPasswordState extends State<SetPassword> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                const Text('Choose your password', style: T.display),
-                const SizedBox(height: 6),
-                Text('The office gave you a temporary one. Pick your own to carry on.', style: T.body.copyWith(color: K.muted)),
-                const SizedBox(height: Sp.xl),
+                Text('Next time, sign in with ${Me.instance.email ?? 'your email'} and this password instead of a code.',
+                    style: T.body.copyWith(color: K.muted)),
+                const SizedBox(height: Sp.lg),
                 KCard(
                   padding: const EdgeInsets.all(Sp.xl),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -243,8 +244,6 @@ class _SetPasswordState extends State<SetPassword> {
                     KField(label: 'Once more', controller: _b, obscure: true, caps: TextCapitalization.none, onSubmitted: (_) => _save()),
                     const SizedBox(height: Sp.lg),
                     KButton(label: 'Save my password', icon: Icons.check_rounded, expand: true, busy: busy, onPressed: _save),
-                    const SizedBox(height: Sp.xs),
-                    Center(child: KButton(label: 'Sign out', kind: KButtonKind.ghost, small: true, onPressed: () => Api.instance.signOut())),
                   ]),
                 ),
               ]),

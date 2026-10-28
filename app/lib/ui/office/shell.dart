@@ -14,6 +14,7 @@ import 'reports.dart';
 import 'round.dart';
 import 'settings.dart';
 import 'staff.dart';
+import 'staff_gate.dart';
 import 'wallboard.dart';
 
 class _Page {
@@ -269,6 +270,13 @@ class MorePage extends StatelessWidget {
             sub: 'After an admin changes what you can open',
             onTap: reload,
           ),
+          if (Me.instance.email != null)
+            KRow(
+              leading: const Icon(Icons.password_rounded, color: K.ink2, size: 21),
+              title: 'Choose a password',
+              sub: 'Sign in with your email and a password, no code',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SetPassword())),
+            ),
           KRow(
             leading: const Icon(Icons.logout_rounded, color: K.ink2, size: 21),
             title: 'Sign out',

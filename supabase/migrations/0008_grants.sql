@@ -48,3 +48,6 @@ grant execute on function
   public.portal_resume(text), public.portal_remove_pause(text, uuid), public.portal_request(text, date, text, numeric, jsonb, text),
   public.portal_withdraw_request(text, uuid)
   to anon, authenticated;
+
+-- The API never needs these, and TRUNCATE would pass by row level security.
+revoke truncate, trigger, references on all tables in schema public from public, anon, authenticated;

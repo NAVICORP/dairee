@@ -308,13 +308,13 @@ reset role;
 -- ---------------------------------------------------------------- stage 5: the customer portal
 select pg_temp.as_user('e4444444-4444-4444-4444-444444444444', null, 'omana@example.com');
 select pg_temp.put('pw', (public.issue_customer_password(pg_temp.get('c1')::uuid)) ->> 'password');
-select pg_temp.ok(pg_temp.get('pw') = 'Text9822', 'the temporary password is four letters of the name and four digits of the number');
+select pg_temp.ok(pg_temp.get('pw') ~ '^Text[0-9]{4}$', 'the temporary password is four letters of the name and four random digits');
 reset role;
 
 select pg_temp.as_anon();
 select pg_temp.fails($$select * from public.customer_logins$$, 'permission denied', 'nobody reads the login table');
 select pg_temp.fails($$select * from public.customers$$, 'permission denied', 'anonymous callers read no customers');
-select pg_temp.fails($$select public.portal_sign_in('9822222222', 'wrong')$$, 'do not match', 'a wrong password is refused');
+select pg_temp.ok((public.portal_sign_in('9822222222', 'wrong') ->> 'error') like '%do not match%', 'a wrong password is refused');
 select pg_temp.put('tok', (public.portal_sign_in('+91 98222 22222', pg_temp.get('pw'))) ->> 'token');
 select pg_temp.ok(length(pg_temp.get('tok')) > 40, 'the right password gives a session');
 select pg_temp.fails(format($$select public.portal_home(%L)$$, pg_temp.get('tok')), 'own password', 'a temporary password must be changed first');
@@ -377,13 +377,54 @@ reset role;
 select pg_temp.as_user('e4444444-4444-4444-4444-444444444444', null, 'omana@example.com');
 select pg_temp.ok(not (public.set_portal_switches(false, null) ->> 'customer_pause')::boolean, 'the Pause / Stop page turns customer pausing off');
 select pg_temp.fails($$select public.report_money(current_date - 40, current_date)$$, 'Payments page', 'reports of money need Payments');
-select pg_temp.fails($$select public.staff_login_target((select id from public.staff limit 1))$$, 'Only an admin', 'only an admin makes logins');
 reset role;
-update public.staff set must_change_password = true where name = 'Omana';
 select pg_temp.as_user('e4444444-4444-4444-4444-444444444444', null, 'omana@example.com');
-select public.password_changed();
+select pg_temp.ok((select count(*) from public.milk_prices) = 0, 'without Payments, the milk price is hidden too');
 reset role;
-select pg_temp.ok(not (select must_change_password from public.staff where name = 'Omana'), 'choosing a password clears the flag');
+
+-- ---------------------------------------------------------------- the review's holes, closed
+-- Nobody points a staff row at somebody else's sign-in, not even an admin.
+select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com');
+select pg_temp.fails($$update public.staff set auth_user_id = 'b2222222-2222-2222-2222-222222222222' where name = 'Dev'$$,
+  'linked when they first sign in', 'an admin cannot link somebody else''s sign-in');
+select pg_temp.fails($$insert into public.staff (name, email, auth_user_id) values ('Fake', 'fake@example.com', 'b2222222-2222-2222-2222-222222222222')$$,
+  'linked when they first sign in', 'nor add a row already linked');
+update public.staff set permissions = '{customers,pauses,deliveries,preparation,staff,settings}' where name = 'Omana';
+reset role;
+-- With the Staff page but not admin: the delivery team only.
+select pg_temp.as_user('e4444444-4444-4444-4444-444444444444', null, 'omana@example.com');
+select pg_temp.fails($$update public.staff set email = 'omana2@example.com' where is_admin$$, 'Only an admin',
+  'the Staff page cannot move an admin''s email to a new owner');
+select pg_temp.fails($$delete from public.staff where is_admin$$, 'Only an admin', 'nor remove an admin');
+select pg_temp.ok(pg_temp.rows($$update public.staff set phone = '919800000099' where name = 'Dev'$$) = 1,
+  'but can fix a delivery person''s number');
+select pg_temp.fails($$select public.resume_customer('$$ || pg_temp.get('c1') || $$', current_date - 5)$$, 'Past days are history',
+  'resuming cannot rewrite past days');
+reset role;
+-- A billed day stays as billed.
+select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com');
+select pg_temp.fails($$select public.set_delivery('$$ || pg_temp.get('c1') || $$', current_date - 25, 'morning', false)$$,
+  'on a bill already', 'a billed day cannot be ticked differently');
+-- Removing a pause that has started keeps its past days.
+reset role;
+insert into public.customer_pauses (farm_id, customer_id, pause_type, from_date, to_date, slot, set_by)
+values (pg_temp.get('f1')::uuid, pg_temp.get('c1')::uuid, 'custom_range', pg_temp.get('today')::date - 3, pg_temp.get('today')::date + 3, 'both', 'office');
+select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com');
+select public.remove_pause((select id from public.customer_pauses where from_date = pg_temp.get('today')::date - 3));
+select pg_temp.ok((select to_date from public.customer_pauses where from_date = pg_temp.get('today')::date - 3) = pg_temp.get('today')::date - 1,
+  'removing a running pause ends it yesterday');
+reset role;
+-- The portal locks a number after eight wrong passwords, and the count sticks.
+select pg_temp.as_anon();
+select pg_temp.ok((public.portal_sign_in('9822222222', 'wrong') ->> 'error') like '%do not match%', 'a wrong password is answered');
+select public.portal_sign_in('9822222222', 'wrong') from generate_series(1, 8);
+reset role;
+select pg_temp.ok((select locked_until is not null from public.customer_logins l
+                   join public.customers c on c.id = l.customer_id where c.phone = '919822222222'), 'eight wrong tries lock the number');
+select pg_temp.as_anon();
+select pg_temp.ok((public.portal_sign_in('9822222222', 'whatever') ->> 'error') like 'Too many tries%', 'and say so');
+reset role;
+select pg_temp.ok(public.temporary_password('Lakshmi') ~ '^Laks[0-9]{4}$', 'a temporary password is the name and four random digits');
 
 -- ---------------------------------------------------------------- leaving
 select pg_temp.as_user('b2222222-2222-2222-2222-222222222222', null, 'babu@example.com');

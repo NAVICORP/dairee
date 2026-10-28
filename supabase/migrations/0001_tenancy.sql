@@ -160,9 +160,6 @@ create table public.staff (
   is_admin             boolean not null default false,
   permissions          text[] not null default '{}',
   profile_editing      boolean not null default false,
-  must_change_password boolean not null default false,
-  -- The SkAuth login Dairee made for this person (email and password), if any.
-  login_id             uuid,
   created_at           timestamptz not null default now(),
   check (coalesce(nullif(btrim(email), ''), nullif(btrim(phone), '')) is not null)
 );
@@ -277,6 +274,14 @@ begin
     end if;
   end if;
 
+  -- A sign-in links itself, when its owner signs in with the verified number
+  -- or email (claim_staff). Nobody, not even an admin, points a row at
+  -- somebody else's sign-in. Letting go of one is fine.
+  if not public.trusted_writer() and new.auth_user_id is not null
+     and (tg_op = 'INSERT' or new.auth_user_id is distinct from old.auth_user_id) then
+    raise exception 'A person is linked when they first sign in.' using errcode = '42501';
+  end if;
+
   if public.trusted_writer() or public.is_admin() then
     return new;
   end if;
@@ -284,8 +289,7 @@ begin
   -- Row level security decides whether a row may be written, not which column
   -- changed. Without this, any staff login could make itself an admin.
   if tg_op = 'INSERT' then
-    if new.is_admin or new.permissions <> '{}' or new.profile_editing or new.auth_user_id is not null
-       or new.login_id is not null or new.must_change_password then
+    if new.is_admin or new.permissions <> '{}' or new.profile_editing then
       raise exception 'Only an admin can change what somebody may do.' using errcode = '42501';
     end if;
     return new;
@@ -293,11 +297,17 @@ begin
 
   if new.is_admin        is distinct from old.is_admin
   or new.permissions     is distinct from old.permissions
-  or new.profile_editing is distinct from old.profile_editing
-  or new.login_id        is distinct from old.login_id
-  or new.must_change_password is distinct from old.must_change_password
-  or (new.auth_user_id is distinct from old.auth_user_id and new.auth_user_id is not null) then
+  or new.profile_editing is distinct from old.profile_editing then
     raise exception 'Only an admin can change what somebody may do.' using errcode = '42501';
+  end if;
+
+  -- With the Staff page but not admin: the delivery and care team only. A new
+  -- number or email on an office row would hand that row's pages to whoever
+  -- owns the new number.
+  if public.staff_can('staff') and (old.is_admin or old.permissions <> '{}')
+     and (new.phone is distinct from old.phone or new.email is distinct from old.email
+          or new.active is distinct from old.active) then
+    raise exception 'Only an admin can change the number, email or access of office staff.' using errcode = '42501';
   end if;
 
   -- Someone editing their own profile (allowed by profile_editing) may change
@@ -316,6 +326,18 @@ begin
 end $$;
 create trigger staff_check before insert or update on public.staff
   for each row execute function public.staff_check();
+
+-- Removing office staff or admins is for admins.
+create or replace function public.staff_delete_check() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if not public.trusted_writer() and not public.is_admin() and (old.is_admin or old.permissions <> '{}') then
+    raise exception 'Only an admin can remove office staff.' using errcode = '42501';
+  end if;
+  return old;
+end $$;
+create trigger staff_delete_check before delete on public.staff
+  for each row execute function public.staff_delete_check();
 
 -- A farm always keeps at least one active admin.
 create or replace function public.staff_keep_admin() returns trigger
@@ -392,8 +414,10 @@ create policy staff_delete on public.staff for delete to authenticated
   using (farm_id = (select public.current_farm_id()) and (select public.staff_can('staff')));
 revoke all on public.staff from anon;
 
+-- The log names prices and bill totals, so it needs the Payments page too.
 create policy audit_read on public.audit_logs for select to authenticated
-  using (farm_id = (select public.current_farm_id()) and (select public.staff_can('settings')));
+  using (farm_id = (select public.current_farm_id()) and (select public.staff_can('settings'))
+         and (select public.staff_can('payments')));
 revoke insert, update, delete on public.audit_logs from anon, authenticated;
 revoke all on public.audit_logs from anon;
 
@@ -429,7 +453,7 @@ begin
       'staff_id', s.id, 'staff_name', s.name, 'position', s.position,
       'is_admin', s.is_admin, 'permissions', to_jsonb(s.permissions),
       'can_deliver', s.can_deliver, 'can_care', s.can_care,
-      'profile_editing', s.profile_editing, 'must_change_password', s.must_change_password,
+      'profile_editing', s.profile_editing,
       'today', public.farm_today(f.id))
       order by s.created_at), '[]'::jsonb)
     into farms

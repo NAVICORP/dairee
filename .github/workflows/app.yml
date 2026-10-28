@@ -162,16 +162,21 @@ jobs:
           node .github/scripts/web_check.mjs http://127.0.0.1:8000
       - name: Add the pictures to the screens branch
         if: always()
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ls web-shots/*.png > /dev/null 2>&1 || exit 0
-          mkdir -p /tmp/web && cp web-shots/*.png /tmp/web/
+          remote="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}"
+          if ! git clone -q --depth 1 -b screens "$remote" /tmp/screens; then
+            mkdir -p /tmp/screens && git -C /tmp/screens init -q -b screens
+          fi
+          cp web-shots/*.png /tmp/screens/
+          cd /tmp/screens
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git fetch -q origin screens; then git checkout -q -B screens FETCH_HEAD; else git checkout -q --orphan screens && git rm -rfq . && git clean -fdq; fi
-          cp /tmp/web/*.png .
-          git add *.png
+          git add -A
           git commit -qm "Web app pictures for ${{ github.sha }}" || exit 0
-          git push -q origin HEAD:screens
+          git push -q "$remote" HEAD:screens
 
   android:
     needs: check

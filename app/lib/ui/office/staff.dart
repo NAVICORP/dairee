@@ -10,7 +10,7 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'staff_gate.dart' show copyText;
 
-const _cols = 'id,name,phone,email,active,auth_user_id,position,can_deliver,can_care,is_admin,permissions,profile_editing,must_change_password,login_id,created_at';
+const _cols = 'id,name,phone,email,active,auth_user_id,position,can_deliver,can_care,is_admin,permissions,profile_editing,created_at';
 
 /// The people who work on the farm and what each may open.
 class StaffPage extends StatefulWidget {
@@ -84,7 +84,7 @@ class _StaffPageState extends State<StaffPage> {
               ),
           ]),
         const SizedBox(height: Sp.md),
-        const Notice('Staff sign in with a code to the WhatsApp number or email you add here. An admin can also give an email a password.', bad: false),
+        const Notice('Staff sign in with a code to the WhatsApp number or email you add here. Once in, they can choose a password for their email under More.', bad: false),
       ]),
     );
   }
@@ -174,12 +174,11 @@ class _StaffEditorState extends State<StaffEditor> {
   }
 
   /// The message for a chat: blank lines between the parts, because it is read
-  /// in a chat bubble and the number and the password are what get retyped.
-  String _message({String? password}) {
+  /// in a chat bubble and the number is what gets retyped. Staff sign in with a
+  /// code; nobody at the farm ever knows their password.
+  String _message() {
     final b = StringBuffer('Dairee, your account at ${widget.farm.name}\n$kLoginUrl\n\n');
-    if (password != null) {
-      b.write('Email: ${s['email']}\n\nTemporary password: $password\n\nYou will be asked to choose your own password when you sign in.');
-    } else if (s['phone'] != null) {
+    if (s['phone'] != null) {
       b.write('Mobile number: ${localPhone(s['phone'] as String?)}\n\nSign in with WhatsApp: a code comes to this number.');
     } else {
       b.write('Email: ${s['email']}\n\nSign in with your email: a code comes to it.');
@@ -187,11 +186,9 @@ class _StaffEditorState extends State<StaffEditor> {
     return b.toString();
   }
 
-  Future<void> _details({String? password}) async {
-    final msg = _message(password: password);
-    await showKSheet<void>(context, title: password == null ? 'Login details' : 'Send it now', builder: (ctx) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (password != null) Text('The password is shown once. Send it now: it is a handover, not something to keep.', style: T.small),
-          const SizedBox(height: Sp.sm),
+  Future<void> _details() async {
+    final msg = _message();
+    await showKSheet<void>(context, title: 'Login details', builder: (ctx) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           KCard(child: SelectableText(msg, style: T.body)),
           const SizedBox(height: Sp.lg),
           KButton(label: 'Copy login details', icon: Icons.copy_rounded, expand: true, onPressed: () => copyText(ctx, msg, 'Login details copied')),
@@ -206,27 +203,6 @@ class _StaffEditorState extends State<StaffEditor> {
             ),
           ],
         ]));
-  }
-
-  Future<void> _login(String action) async {
-    try {
-      final r = await Api.instance.function('staff-login', {'action': action, 'staff_id': s['id']});
-      if (!mounted) return;
-      final m = r is Map ? r : const {};
-      if (m['error'] != null) {
-        toast(context, '${m['error']}', bad: true);
-        return;
-      }
-      if (m['password'] != null) {
-        await _details(password: '${m['password']}');
-      } else {
-        toast(context, '${m['message'] ?? 'Done'}');
-      }
-      final fresh = await Api.instance.select('staff', columns: _cols, where: {'id': 'eq.${s['id']}'});
-      if (fresh.isNotEmpty && mounted) setState(() => s = fresh.first);
-    } on ApiError catch (e) {
-      if (mounted) toast(context, e.message, bad: true);
-    }
   }
 
   Future<void> _delete() async {
@@ -299,15 +275,9 @@ class _StaffEditorState extends State<StaffEditor> {
           KGroup(children: [
             KRow(
               title: s['auth_user_id'] == null ? 'Has not signed in yet' : 'Has signed in',
-              sub: s['login_id'] != null ? 'Has an email and password login from Dairee' : 'Signs in with a code to their number or email',
+              sub: 'Signs in with a code to their number or email',
             ),
             KRow(leading: const Icon(Icons.copy_rounded, color: K.ink2, size: 20), title: 'Copy login details', onTap: () => _details()),
-            if (iAmAdmin && (s['email'] ?? '') != '' && s['login_id'] == null)
-              KRow(leading: const Icon(Icons.vpn_key_outlined, color: K.ink2, size: 20), title: 'Give an email and password', sub: 'For staff who cannot get codes', onTap: () => _login('create')),
-            if (iAmAdmin && s['login_id'] != null) ...[
-              KRow(leading: const Icon(Icons.password_rounded, color: K.ink2, size: 20), title: 'Reset the password', onTap: () => _login('reset')),
-              KRow(leading: const Icon(Icons.no_encryption_outlined, color: K.bad, size: 20), title: 'Remove the password login', onTap: () => _login('remove')),
-            ],
           ]),
           if (!me) ...[
             const SectionTitle('Manage'),

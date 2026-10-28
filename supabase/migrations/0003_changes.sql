@@ -282,28 +282,47 @@ begin
   if not public.staff_can('pauses') then
     raise exception 'You need the Pause / Stop page to resume milk.' using errcode = '42501';
   end if;
+  if from_date < public.farm_today(c.farm_id) then
+    raise exception 'Past days are history: resume from today or later.' using errcode = '22023';
+  end if;
+  if public.day_locked(c.farm_id, coalesce(from_date, public.farm_today(c.farm_id))) then
+    raise exception 'That day is closed.' using errcode = '22023';
+  end if;
   n := public.end_pauses(c, coalesce(from_date, public.farm_today(c.farm_id)));
   perform public.audit(c.farm_id, 'resume', 'customer', c.id::text,
     format('%s resumed from %s', c.name, coalesce(from_date, public.farm_today(c.farm_id))));
   return n;
 end $$;
 
+-- Removing a pause takes away the days still to come. Days already past (or
+-- closed) stay paused: they are history, and may be on a bill.
 create or replace function public.remove_pause(pause_id uuid) returns void
 language plpgsql security definer set search_path = '' as $$
-declare p public.customer_pauses%rowtype; c public.customers;
+declare p public.customer_pauses%rowtype; c public.customers; d date; today date;
 begin
   select * into p from public.customer_pauses x where x.id = pause_id;
   if not found then
     -- A single date, perhaps.
-    select x.customer_id into p.customer_id from public.customer_pause_dates x where x.id = pause_id;
+    select x.customer_id, x.pause_date into p.customer_id, d from public.customer_pause_dates x where x.id = pause_id;
     if not found then raise exception 'That pause was already removed.' using errcode = 'P0002'; end if;
     c := public.customer_on_farm(p.customer_id);
     if not public.staff_can('pauses') then raise exception 'You need the Pause / Stop page.' using errcode = '42501'; end if;
+    if d < public.farm_today(c.farm_id) or public.day_locked(c.farm_id, d) then
+      raise exception 'That day has passed or is closed.' using errcode = '22023';
+    end if;
     delete from public.customer_pause_dates x where x.id = pause_id;
   else
     c := public.customer_on_farm(p.customer_id);
     if not public.staff_can('pauses') then raise exception 'You need the Pause / Stop page.' using errcode = '42501'; end if;
-    delete from public.customer_pauses x where x.id = pause_id;
+    today := public.farm_today(c.farm_id);
+    if public.day_locked(c.farm_id, today) then today := today + 1; end if;
+    if p.from_date >= today then
+      delete from public.customer_pauses x where x.id = pause_id;
+    elsif p.to_date is not null and p.to_date < today then
+      raise exception 'That pause is over. It stays as a record.' using errcode = '22023';
+    else
+      update public.customer_pauses x set to_date = today - 1, pause_type = 'custom_range' where x.id = pause_id;
+    end if;
   end if;
   perform public.audit(c.farm_id, 'remove_pause', 'customer', c.id::text, format('A pause for %s was removed', c.name));
 end $$;
@@ -374,6 +393,7 @@ begin
   if r.status <> 'pending' then raise exception 'That request was already answered.' using errcode = '22023'; end if;
   if approve then
     if r.delivery_date < public.farm_today(c.farm_id) then raise exception 'That day has passed.' using errcode = '22023'; end if;
+    if public.day_locked(c.farm_id, r.delivery_date) then raise exception 'That day is closed.' using errcode = '22023'; end if;
     insert into public.temporary_deliveries (farm_id, customer_id, delivery_date, slot, quantity, containers, note, created_by, request_id)
     values (c.farm_id, c.id, r.delivery_date, r.slot, r.quantity, r.containers, r.note, public.my_name(), r.id)
     on conflict on constraint temporary_deliveries_customer_id_delivery_date_slot_key do update

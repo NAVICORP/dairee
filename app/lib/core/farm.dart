@@ -18,7 +18,6 @@ class FarmRole {
   bool get isAdmin => j['is_admin'] == true;
   bool get canDeliver => j['can_deliver'] == true;
   bool get canCare => j['can_care'] == true;
-  bool get mustChangePassword => j['must_change_password'] == true;
   bool get profileEditing => j['profile_editing'] == true;
   List<String> get permissions => (j['permissions'] as List? ?? const []).map((e) => '$e').toList();
 

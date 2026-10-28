@@ -1,48 +1,10 @@
--- What the app needs beyond the stages: staff logins Dairee makes, the portal
--- switches on the Pause / Stop page, and the reports.
-
--- ---------------------------------------------------------------- staff logins
+-- What the app needs beyond the stages: the portal switches on the Pause /
+-- Stop page, and the reports.
 --
--- Staff with an email can be given an email and password login (a SkiFi
--- login made by Dairee through SkAuth's admin API, in the staff-login server
--- function). The decision of who may do that lives here, so it is made in one
--- place: an admin of the same farm as the person.
-
-create or replace function public.staff_login_target(staff_id uuid) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare s public.staff%rowtype;
-begin
-  select * into s from public.staff x where x.id = staff_id;
-  if not found or s.farm_id is distinct from public.current_farm_id() then
-    raise exception 'That person is not on this farm.' using errcode = '42501';
-  end if;
-  if not public.is_admin() then
-    raise exception 'Only an admin can make or reset logins.' using errcode = '42501';
-  end if;
-  return jsonb_build_object('staff_id', s.id, 'farm_id', s.farm_id, 'name', s.name, 'email', s.email, 'phone', s.phone,
-    'login_id', s.login_id, 'auth_user_id', s.auth_user_id,
-    'farm_name', (select f.name from public.farms f where f.id = s.farm_id), 'by', public.my_name());
-end $$;
-
--- Called by the server function only (service role), after SkAuth answered.
-create or replace function public.staff_login_made(staff_id uuid, login_id uuid, temporary boolean, note text) returns void
-language plpgsql security definer set search_path = '' as $$
-declare s public.staff%rowtype;
-begin
-  select * into s from public.staff x where x.id = staff_id;
-  if not found then raise exception 'That person is gone.' using errcode = 'P0002'; end if;
-  update public.staff x set login_id = staff_login_made.login_id, must_change_password = coalesce(temporary, false)
-   where x.id = s.id;
-  insert into public.audit_logs (farm_id, action_type, entity_type, entity_id, performed_by, notes)
-  values (s.farm_id, 'staff_login', 'staff', s.id::text, coalesce(nullif(btrim(split_part(note, '|', 1)), ''), 'The office'),
-          nullif(btrim(split_part(note, '|', 2)), ''));
-end $$;
-
--- After someone picks their own password, the app stops asking.
-create or replace function public.password_changed() returns void
-language sql security definer set search_path = '' as $$
-  update public.staff s set must_change_password = false where s.auth_user_id = auth.uid() and s.must_change_password;
-$$;
+-- Staff sign in with a code to their WhatsApp number or email (SkAuth), and
+-- may then choose a password for that email themselves. The farm never makes
+-- or resets anybody's sign-in: SkAuth is shared by every SkiFi app, so a
+-- login made by one farm's admin would be somebody's SkiFi identity.
 
 -- ---------------------------------------------------------------- the portal switches
 --
@@ -145,11 +107,11 @@ end $$;
 
 -- ---------------------------------------------------------------- who may call what
 
-revoke execute on function public.staff_login_made(uuid, uuid, boolean, text), public.report_days(date, date),
+revoke execute on function public.report_days(date, date),
   public.report_customers(date, date), public.report_money(date, date), public.customer_history(uuid, int),
-  public.staff_login_target(uuid), public.password_changed(), public.set_portal_switches(boolean, boolean)
+  public.set_portal_switches(boolean, boolean)
   from public, anon, authenticated;
-grant execute on function public.staff_login_target(uuid), public.password_changed(),
+grant execute on function
   public.set_portal_switches(boolean, boolean), public.report_days(date, date), public.report_customers(date, date),
   public.report_money(date, date), public.customer_history(uuid, int)
   to authenticated;

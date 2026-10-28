@@ -235,26 +235,29 @@ class _SettingsPageState extends State<SettingsPage> {
       body: x == null
           ? (error != null ? LoadFailed(message: error!, onRetry: _load) : const Loading())
           : PageBody(onRefresh: _load, children: [
-              const SectionTitle('Milk price', top: 4),
-              KGroup(children: [
-                if (prices.isEmpty) const KRow(title: 'No price yet', sub: 'Bills need a price for every day they cover'),
-                for (final p in prices)
-                  KRow(
-                    title: '${f.money(toNum(p['price_per_liter']))} a litre',
-                    sub: 'From ${dateLabel(parseDay(p['effective_from'])!)}${p['effective_to'] == null ? '' : ' to ${dateLabel(parseDay(p['effective_to'])!)}'}',
-                    trailing: RoundIcon(Icons.delete_outline_rounded, size: 32, tooltip: 'Delete this price', onTap: () async {
-                      if (!await confirm(context, title: 'Delete this price?', text: 'Bills already made keep their figures.', yes: 'Delete', danger: true)) return;
-                      try {
-                        await Api.instance.delete('milk_prices', where: {'id': 'eq.${p['id']}'});
-                        _load();
-                      } on ApiError catch (e) {
-                        if (context.mounted) toast(context, e.message, bad: true);
-                      }
-                    }),
-                  ),
-                KRow(leading: const Icon(Icons.add_rounded, color: K.blue, size: 20), title: 'New price', onTap: _addPrice),
-              ]),
-              const SectionTitle('Vessels'),
+              // The price feeds every bill: it is shown with the Payments page only.
+              if (f.seesMoney) ...[
+                const SectionTitle('Milk price', top: 4),
+                KGroup(children: [
+                  if (prices.isEmpty) const KRow(title: 'No price yet', sub: 'Bills need a price for every day they cover'),
+                  for (final p in prices)
+                    KRow(
+                      title: '${f.money(toNum(p['price_per_liter']))} a litre',
+                      sub: 'From ${dateLabel(parseDay(p['effective_from'])!)}${p['effective_to'] == null ? '' : ' to ${dateLabel(parseDay(p['effective_to'])!)}'}',
+                      trailing: RoundIcon(Icons.delete_outline_rounded, size: 32, tooltip: 'Delete this price', onTap: () async {
+                        if (!await confirm(context, title: 'Delete this price?', text: 'Bills already made keep their figures.', yes: 'Delete', danger: true)) return;
+                        try {
+                          await Api.instance.delete('milk_prices', where: {'id': 'eq.${p['id']}'});
+                          _load();
+                        } on ApiError catch (e) {
+                          if (context.mounted) toast(context, e.message, bad: true);
+                        }
+                      }),
+                    ),
+                  KRow(leading: const Icon(Icons.add_rounded, color: K.blue, size: 20), title: 'New price', onTap: _addPrice),
+                ]),
+              ],
+              SectionTitle('Vessels', top: f.seesMoney ? 18 : 4),
               KGroup(children: [
                 for (final v in vessels)
                   KRow(
@@ -322,12 +325,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   sub: 'Customers, deliveries, bills, payments, the herd',
                   onTap: () => exportFarm(context, f, from: DateTime(f.today.year, f.today.month - 1, 1), to: f.today),
                 ),
-                KRow(
-                  leading: const Icon(Icons.history_rounded, color: K.ink2, size: 20),
-                  title: 'What happened',
-                  sub: 'Every change, who made it and when',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AuditLog())),
-                ),
+                // The log names prices and bill totals, so it comes with Payments.
+                if (f.seesMoney)
+                  KRow(
+                    leading: const Icon(Icons.history_rounded, color: K.ink2, size: 20),
+                    title: 'What happened',
+                    sub: 'Every change, who made it and when',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AuditLog())),
+                  ),
                 if (f.seesMoney)
                   KRow(
                     leading: const Icon(Icons.fact_check_outlined, color: K.ink2, size: 20),
