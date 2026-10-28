@@ -6,7 +6,8 @@ stores and the site use, so a change here reaches all of them at once.
     python3 tools/brand/brand.py
 
 Writes:
-- web/assets/brand/dairee-mark.svg   the logo as vector (the source for print)
+- web/assets/brand/dairee-mark.svg   the logo as vector, in its two blues (for print)
+- web/assets/brand/dairee-icon.svg   the logo as it is shown: white on a blue tile
 - app/lib/ui/brand_mark.dart         the same shapes as Flutter paths
 - the app, Android, iPhone, web app and site icons (PNG and favicon.ico)
 """
@@ -83,13 +84,21 @@ def path_d(curves):
 
 # ---------------------------------------------------------------- drawing
 
-def svg(shapes, size, bg=None, scale=1.0, radius=0.0):
-    """The logo at `size` px, at `scale` of the canvas, on `bg` (or clear)."""
+def svg(shapes, size, bg=None, scale=1.0, radius=0.0, fg=None):
+    """The logo at `size` px, at `scale` of the canvas, on `bg` (or clear).
+    With `fg`, every shape is drawn in that one colour (white on the blue
+    tile: the thin gap between the field and the path then shows blue)."""
     tile = f'<rect width="1000" height="1000" rx="{radius * 1000:.0f}" fill="{bg}"/>' if bg else ''
     t = f'translate({500 - 500 * scale:.2f},{500 - 500 * scale:.2f}) scale({scale})'
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="{size}" height="{size}">{tile}'
-            f'<g transform="{t}"><path fill-rule="evenodd" fill="{MAIN}" d="{path_d(shapes["main"])}"/>'
-            f'<path fill-rule="evenodd" fill="{LIGHT}" d="{path_d(shapes["light"])}"/></g></svg>')
+            f'<g transform="{t}"><path fill-rule="evenodd" fill="{fg or MAIN}" d="{path_d(shapes["main"])}"/>'
+            f'<path fill-rule="evenodd" fill="{fg or LIGHT}" d="{path_d(shapes["light"])}"/></g></svg>')
+
+
+# How the logo is shown as an icon: the shapes in white on a blue tile, the
+# D taking 60 of every 100 points across.
+TILE = {'bg': MAIN, 'fg': WHITE, 'scale': 0.6}
+ROUND = 0.24  # corners, where the icon draws its own
 
 
 def share_card(page, shapes):
@@ -99,7 +108,7 @@ def share_card(page, shapes):
     def font(name):
         with open(os.path.join(ROOT, 'web/assets/fonts', name), 'rb') as f:
             return 'data:font/woff2;base64,' + base64.b64encode(f.read()).decode()
-    icon = svg(shapes, 150, bg=WHITE, scale=0.66, radius=0.24)
+    icon = svg(shapes, 150, **TILE, radius=ROUND)
     page.set_viewport_size({'width': 1200, 'height': 630})
     page.set_content(f"""<html><head><style>
 @font-face{{font-family:B;font-weight:500 800;src:url({font('bricolage.woff2')})}}
@@ -173,6 +182,8 @@ def main():
 
     with open(os.path.join(ROOT, 'web/assets/brand/dairee-mark.svg'), 'w') as f:
         f.write(svg(shapes, 1000).replace(' width="1000" height="1000"', ''))
+    with open(os.path.join(ROOT, 'web/assets/brand/dairee-icon.svg'), 'w') as f:
+        f.write(svg(shapes, 1000, **TILE, radius=ROUND).replace(' width="1000" height="1000"', ''))
     with open(os.path.join(ROOT, 'app/lib/ui/brand_mark.dart'), 'w') as f:
         f.write(dart(shapes))
 
@@ -182,34 +193,34 @@ def main():
         out[os.path.join(ROOT, path)] = (size, kw)
 
     # The app's own copies.
-    want('app/assets/brand/icon.png', 1024, bg=WHITE, scale=0.66)
-    want('app/assets/brand/mark.png', 512)
-    want('app/assets/brand/icon-foreground.png', 1024, scale=0.5)
-    # Android: the full icon for old launchers; the adaptive foreground keeps
-    # the logo inside the 66 of 108 safe circle.
+    want('app/assets/brand/icon.png', 1024, **TILE)
+    want('app/assets/brand/mark.png', 512, **TILE, radius=ROUND)
+    want('app/assets/brand/icon-foreground.png', 1024, fg=WHITE, scale=0.4)
+    # Android: the full icon for old launchers; the adaptive foreground (on the
+    # blue of ic_launcher_background) keeps the D inside the 66 of 108 safe circle.
     for d, s in {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}.items():
-        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher.png', s, bg=WHITE, scale=0.66, radius=0.22)
-        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher_foreground.png', int(s * 108 / 48), scale=0.5)
+        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher.png', s, **TILE, radius=0.22)
+        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher_foreground.png', int(s * 108 / 48), fg=WHITE, scale=0.4)
     # iPhone: square and opaque; iOS rounds the corners itself.
     for name, s in {'20x20@1x': 20, '20x20@2x': 40, '20x20@3x': 60, '29x29@1x': 29, '29x29@2x': 58, '29x29@3x': 87,
                     '40x40@1x': 40, '40x40@2x': 80, '40x40@3x': 120, '60x60@2x': 120, '60x60@3x': 180,
                     '76x76@1x': 76, '76x76@2x': 152, '83.5x83.5@2x': 167, '1024x1024@1x': 1024}.items():
-        want(f'app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-{name}.png', s, bg=WHITE, scale=0.66)
-    # iPhone launch screen: the logo on the app's paper colour.
-    for suffix, s in {'': 120, '@2x': 240, '@3x': 360}.items():
-        want(f'app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage{suffix}.png', s, scale=0.8)
+        want(f'app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-{name}.png', s, **TILE)
+    # iPhone launch screen: the rounded tile on the app's paper colour.
+    for suffix, s in {'': 96, '@2x': 192, '@3x': 288}.items():
+        want(f'app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage{suffix}.png', s, **TILE, radius=ROUND)
     # The web app.
-    want('app/web/favicon.png', 32)
-    want('app/web/icons/mark.png', 192)
-    want('app/web/icons/Icon-192.png', 192, bg=WHITE, scale=0.66)
-    want('app/web/icons/Icon-512.png', 512, bg=WHITE, scale=0.66)
-    want('app/web/icons/Icon-maskable-192.png', 192, bg=WHITE, scale=0.56)
-    want('app/web/icons/Icon-maskable-512.png', 512, bg=WHITE, scale=0.56)
-    want('app/web/icons/apple-touch-icon.png', 180, bg=WHITE, scale=0.66)
+    want('app/web/favicon.png', 32, bg=MAIN, fg=WHITE, scale=0.68, radius=0.22)
+    want('app/web/icons/mark.png', 192, **TILE, radius=ROUND)
+    want('app/web/icons/Icon-192.png', 192, **TILE, radius=0.22)
+    want('app/web/icons/Icon-512.png', 512, **TILE, radius=0.22)
+    want('app/web/icons/Icon-maskable-192.png', 192, bg=MAIN, fg=WHITE, scale=0.48)
+    want('app/web/icons/Icon-maskable-512.png', 512, bg=MAIN, fg=WHITE, scale=0.48)
+    want('app/web/icons/apple-touch-icon.png', 180, **TILE)
     # The site.
-    want('web/assets/brand/icon-64.png', 64, bg=WHITE, scale=0.7)
-    want('web/assets/brand/icon-128.png', 128, bg=WHITE, scale=0.7)
-    want('web/assets/brand/touch-180.png', 180, bg=WHITE, scale=0.66)
+    want('web/assets/brand/icon-64.png', 64, **TILE, radius=ROUND)
+    want('web/assets/brand/icon-128.png', 128, **TILE, radius=ROUND)
+    want('web/assets/brand/touch-180.png', 180, **TILE)
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -227,7 +238,7 @@ def main():
             os.makedirs(os.path.dirname(path), exist_ok=True)
             render(size, **kw).save(path, optimize=True)
             print(os.path.relpath(path, ROOT), size)
-        ico = {s: render(s) for s in (16, 32, 48)}
+        ico = {s: render(s, bg=MAIN, fg=WHITE, scale=0.68, radius=0.22) for s in (16, 32, 48)}
         share_card(page, shapes)
         browser.close()
 

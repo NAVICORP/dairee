@@ -130,7 +130,7 @@ class _WelcomeState extends State<Welcome> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Center(child: DaireeIcon(size: 84)),
+                  const Center(child: DaireeIcon(size: 84, shadow: true)),
                   const SizedBox(height: 16),
                   const Text('Dairee', textAlign: TextAlign.center, style: T.display),
                   const SizedBox(height: 4),

@@ -1168,25 +1168,49 @@ class PageBody extends StatelessWidget {
   }
 }
 
-/// The app icon as a tile: the mark on white, with the icon's rounded corners,
-/// for the sign-in screen (like the Kuree tile).
+/// The logo as it is shown: the D, the sprout and the field in white on a
+/// blue tile with rounded corners, like the app icon. Drawn, not loaded, so
+/// it is there on the very first frame, at any size.
 class DaireeIcon extends StatelessWidget {
-  const DaireeIcon({super.key, this.size = 84});
+  const DaireeIcon({super.key, this.size = 84, this.shadow = false});
   final double size;
+  final bool shadow;
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: K.surface,
-          borderRadius: BorderRadius.circular(size * 0.25),
-          border: Border.all(color: K.border),
-          boxShadow: const [BoxShadow(color: Color(0x2E071C42), blurRadius: 30, spreadRadius: -12, offset: Offset(0, 14))],
-        ),
-        child: DaireeMark(size: size * 0.66),
-      );
+  Widget build(BuildContext context) {
+    final tile = Semantics(label: 'Dairee', image: true, child: CustomPaint(size: Size.square(size), painter: const _TilePainter()));
+    if (!shadow) return tile;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * 0.24),
+        boxShadow: const [BoxShadow(color: Color(0x4D1064D9), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 14))],
+      ),
+      child: tile,
+    );
+  }
+}
+
+class _TilePainter extends CustomPainter {
+  const _TilePainter();
+  static final Path _main = daireeMain();
+  static final Path _light = daireeLight();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(s * 0.24)), Paint()..color = const Color(daireeMainColour));
+    // The logo's 1000 point box, 60 of every 100 points across, centred.
+    canvas.save();
+    canvas.translate(s * 0.2, s * 0.2);
+    canvas.scale(s * 0.6 / 1000);
+    final white = Paint()..color = Colors.white;
+    canvas.drawPath(_main, white);
+    canvas.drawPath(_light, white);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _TilePainter old) => false;
 }
 
 /// Dairee's logo (the D with a sprout and a field), drawn from the vector

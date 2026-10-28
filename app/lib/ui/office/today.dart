@@ -79,7 +79,7 @@ class _TodayPageState extends State<TodayPage> {
         title: wide
             ? const Text('Today')
             : Row(children: [
-                const DaireeMark(size: 28),
+                const DaireeIcon(size: 30),
                 const SizedBox(width: 10),
                 Text('Dairee', style: T.h2.copyWith(fontSize: 21)),
               ]),

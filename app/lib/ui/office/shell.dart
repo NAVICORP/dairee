@@ -200,7 +200,7 @@ class _SideBar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 14, 6),
             child: Row(children: [
-              const DaireeMark(size: 30),
+              const DaireeIcon(size: 32),
               const SizedBox(width: 10),
               Text('Dairee', style: T.h2.copyWith(fontSize: 21)),
             ]),
