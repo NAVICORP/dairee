@@ -209,7 +209,7 @@ function serviceWorker() {
   // Every visit needs these. The engine is kept once the browser has used it.
   const core = known.filter((f) => !f.startsWith('/app/canvaskit/'));
   const body = `// Dairee's service worker, build ${version}.
-const CACHE = 'dairee-${version}';
+const CACHE = 'dairee-shell-${version}';
 const KNOWN = new Set(${JSON.stringify(known)});
 const CORE = ${JSON.stringify(core)};
 const API = /^\\/(rest|auth|functions|storage)\\/v1(\\/|$)|^\\/platform\\//;
@@ -219,9 +219,10 @@ self.addEventListener('install', (e) => {
     const c = await caches.open(CACHE);
     await c.addAll(CORE);
     // What the last build kept for this browser (its engine) is kept again.
+    // Only from a shell cache: the older caches held every engine.
     const before = new Set();
     for (const k of await caches.keys()) {
-      if (!k.startsWith('dairee-') || k === CACHE) continue;
+      if (!k.startsWith('dairee-shell-') || k === CACHE) continue;
       for (const r of await (await caches.open(k)).keys()) before.add(new URL(r.url).pathname);
     }
     await keep(c, [...before].filter((p) => KNOWN.has(p)));
