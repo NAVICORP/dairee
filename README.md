@@ -19,7 +19,7 @@ One Flutter app for Android, iPhone and the web (dairee.skifi.co/app), on SkiFi'
 
 ## How it fits together
 
-- **Sign-in** is SkAuth at account.skifi.co (WhatsApp code, email code, or password), passed through by the shared SkiFi app base. Staff are added by the farm with a number or an email; their row links to them the first time they sign in with it. Nobody at a farm makes or resets anyone's sign-in: SkAuth is shared by every SkiFi app, so staff choose their own password (More > Choose a password) after signing in with a code.
+- **Sign-in** is SkAuth at account.skifi.co (WhatsApp code, email code, or password), passed through by the shared SkiFi app base. Staff are added by the farm with a number or an email; their row links to them the first time they sign in with it. Nobody at a farm makes or resets anyone's sign-in: SkAuth is shared by every SkiFi app, so staff choose their own password (Profile > Choose a password) after signing in with a code.
 - **Farms**: anyone who signs in can start a farm and becomes its admin. Every table carries `farm_id`, and row security keeps each farm's people inside it. The app sends the farm it is working in as `x-farm-id`.
 - **The round** comes from one place, `expected_rounds`: each customer's standing quantity per round, less pauses, with one-day changes winning over pauses. The round, packing, bills and the portal all read it.
 - **Money** has one answer for what is owed, the `bill_balances` view. Credit is kept by the database (`recompute_customer_credit`), never added up by the app. Settings > Check the money compares every total.
