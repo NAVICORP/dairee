@@ -112,7 +112,8 @@ select current_setting('demo.farm')::uuid, e.customer_id, e.day, e.slot,
        case when (abs(hashtext(e.customer_id::text || e.day)) % 23) <> 0 then e.qty end,
        case when (abs(hashtext(e.customer_id::text || e.day)) % 23) <> 0 then e.containers end,
        c.delivery_staff_id, (select name from public.staff s where s.id = c.delivery_staff_id),
-       (abs(hashtext(e.customer_id::text || e.day)) % 4) <> 0
+       -- Bottles come back the next round or so: only the last three days keep any out.
+       e.day < public.farm_today(current_setting('demo.farm')::uuid) - 3 or (abs(hashtext(e.customer_id::text || e.day)) % 4) <> 0
 from public.expected_rounds(current_setting('demo.farm')::uuid,
        public.farm_today(current_setting('demo.farm')::uuid) - 70, public.farm_today(current_setting('demo.farm')::uuid) - 1) e
 join public.customers c on c.id = e.customer_id

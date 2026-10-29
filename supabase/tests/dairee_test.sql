@@ -176,6 +176,20 @@ select pg_temp.ok((select notes from public.audit_logs where action_type = 'mark
                   like 'Textiles shop marked delivered for %morning round', 'the audit log reads as a sentence');
 select pg_temp.ok(((public.day_summary(pg_temp.get('today')::date)) -> 'slots' -> 'morning' ->> 'delivered')::int = 1,
   'the day summary counts one door done');
+-- Bottles still out: yesterday's bottle at the shop shows on today's round
+-- until somebody marks it back, and the round lists the delivery team.
+select public.set_delivery(pg_temp.get('c1')::uuid, pg_temp.get('today')::date - 1, 'morning', true);
+select pg_temp.ok((select (s ->> 'bottles_out')::int = 1 and s -> 'bottle_days' -> 0 ->> 'day' = (pg_temp.get('today')::date - 1)::text
+                     from jsonb_array_elements(public.round(pg_temp.get('today')::date, 'morning') -> 'stops') s
+                    where s ->> 'customer_id' = pg_temp.get('c1')), 'yesterday''s bottle at the shop is still to collect today');
+select public.set_bottle_returned(pg_temp.get('c1')::uuid, pg_temp.get('today')::date - 1, 'morning', true);
+select pg_temp.ok((select (s ->> 'bottles_out')::int = 0
+                     from jsonb_array_elements(public.round(pg_temp.get('today')::date, 'morning') -> 'stops') s
+                    where s ->> 'customer_id' = pg_temp.get('c1')), 'and once it is back, it is gone');
+select pg_temp.ok(public.round(pg_temp.get('today')::date, 'morning') -> 'staff' @> '[{"name": "Dev"}]', 'the round lists the delivery team');
+select pg_temp.ok((select s ->> 'delivered_at' is not null
+                     from jsonb_array_elements(public.round(pg_temp.get('today')::date, 'morning') -> 'stops') s
+                    where s ->> 'customer_id' = pg_temp.get('c1')), 'a delivered stop says when');
 
 -- ---------------------------------------------------------------- stage 3: pauses and temporary deliveries
 select public.pause_customer(pg_temp.get('c1')::uuid, 'custom_range', pg_temp.get('today')::date + 1, pg_temp.get('today')::date + 3);

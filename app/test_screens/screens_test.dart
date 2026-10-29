@@ -198,6 +198,14 @@ Future<void> shot(WidgetTester tester, String name) async {
   await expectLater(find.byType(MaterialApp).first, matchesGoldenFile('shots/$name.png'));
 }
 
+/// Scrolls the last match into view, then taps it.
+Future<void> see(WidgetTester tester, Finder f) async {
+  if (f.evaluate().isEmpty) return;
+  await tester.ensureVisible(f.last);
+  await settle(tester);
+  await tap(tester, f);
+}
+
 /// Taps the last match, if there is one (the footer comes after the page).
 Future<void> tap(WidgetTester tester, Finder f) async {
   if (f.evaluate().isEmpty) return;
@@ -289,10 +297,13 @@ void main() {
     phone(tester);
     await shell(tester);
     await shot(tester, '09-today');
-    await tap(tester, find.text('Morning round'));
+    await see(tester, find.text('HARBOUR HEIGHTS'));
     await shot(tester, '10-round');
-    await tap(tester, find.text('Lake View'));
+    await see(tester, find.text('PALM GROVE'));
+    await see(tester, find.text('Anitha Nair'));
     await shot(tester, '11-round-stops');
+    await see(tester, find.text('Filter'));
+    await shot(tester, '15-round-filter');
     await tap(tester, find.byTooltip('More'));
     await shot(tester, '14-round-menu');
   }, skip: skip);
@@ -307,7 +318,7 @@ void main() {
   testWidgets('packing', (tester) async {
     phone(tester);
     await shell(tester);
-    await tap(tester, find.textContaining('Packing for'));
+    await tap(tester, find.byTooltip('Packing'));
     await shot(tester, '13-packing');
   }, skip: skip);
 
@@ -482,7 +493,8 @@ void main() {
     desktop(tester);
     await shell(tester);
     await shot(tester, 'w1-today');
-    await tap(tester, find.text('Morning round'));
+    await see(tester, find.text('HARBOUR HEIGHTS'));
+    await see(tester, find.text('LAKE VIEW'));
     await shot(tester, 'w5-round');
   }, skip: skip);
 

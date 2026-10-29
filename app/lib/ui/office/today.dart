@@ -7,19 +7,37 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'round.dart';
 
-/// The farm's day at a glance, like Kuree's list of chits: a card for each
-/// round with how far it has got, then the packing, the money still to
-/// collect and any requests from customers. Each card opens its page.
-class TodayPage extends StatefulWidget {
+/// The Today page. For anyone on the rounds it is the delivery screen, as it
+/// was in Mazra: the day, the round, how far it has got and every door, with
+/// the packing and customers' requests a tap away on top. For the office
+/// without the rounds, the day's packing and requests as cards.
+class TodayPage extends StatelessWidget {
   const TodayPage({super.key, required this.farm, required this.open});
   final FarmRole farm;
   final void Function(String key) open;
 
   @override
-  State<TodayPage> createState() => _TodayPageState();
+  Widget build(BuildContext context) {
+    if (farm.can('deliveries') || farm.canDeliver) {
+      return RoundView(farm: farm, office: farm.can('deliveries'), home: true, open: open);
+    }
+    return _TodayCards(farm: farm, open: open);
+  }
 }
 
-class _TodayPageState extends State<TodayPage> {
+/// The farm's day at a glance, like Kuree's list of chits: a card for each
+/// round with how far it has got, then the packing, the money still to
+/// collect and any requests from customers. Each card opens its page.
+class _TodayCards extends StatefulWidget {
+  const _TodayCards({required this.farm, required this.open});
+  final FarmRole farm;
+  final void Function(String key) open;
+
+  @override
+  State<_TodayCards> createState() => _TodayCardsState();
+}
+
+class _TodayCardsState extends State<_TodayCards> {
   Map<String, dynamic>? rounds;
   Map<String, dynamic>? packing;
   Map<String, dynamic>? money;
