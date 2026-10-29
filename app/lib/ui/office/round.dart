@@ -76,7 +76,6 @@ class RoundOnly extends StatelessWidget {
 /// for a bottle back, amber for something to look at, red for a closed day.
 class _C {
   static const green = Color(0xFF22C55E);
-  static const green50 = Color(0xFFF0FDF4);
   static const greenRow = Color(0xFFF6FDF8);
   static const green100 = Color(0xFFDCFCE7);
   static const green600 = Color(0xFF16A34A);
@@ -1643,10 +1642,12 @@ class _StopRowState extends State<_StopRow> {
                         await widget.onNote('');
                         note.clear();
                       }
-                      if (mounted) setState(() {
-                        saving = false;
-                        noteOpen = false;
-                      });
+                      if (mounted) {
+                        setState(() {
+                          saving = false;
+                          noteOpen = false;
+                        });
+                      }
                     },
               color: K.surface,
               border: K.border,
@@ -1665,10 +1666,12 @@ class _StopRowState extends State<_StopRow> {
                   : () async {
                       setState(() => saving = true);
                       await widget.onNote(note.text.trim());
-                      if (mounted) setState(() {
-                        saving = false;
-                        noteOpen = false;
-                      });
+                      if (mounted) {
+                        setState(() {
+                          saving = false;
+                          noteOpen = false;
+                        });
+                      }
                     },
               color: _C.amber,
               radius: 10,
