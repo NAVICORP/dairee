@@ -270,7 +270,7 @@ jobs:
           [ -n "$KEY_P8" ] || missing="$missing APP_STORE_CONNECT_KEY_P8"
           if [ -n "$missing" ]; then echo "::error::Add these repository secrets first:$missing"; exit 1; fi
           mkdir -p "$RUNNER_TEMP/keys"
-          if printf '%s' "$KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then printf '%s\n' "$KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"; else printf '%s' "$KEY_P8" | base64 --decode > "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"; fi
+          python3 .github/scripts/p8.py > "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
           echo "P12_PASSWORD=$(openssl rand -hex 16)" >> "$GITHUB_ENV"
 
       - name: Certificate and profile from App Store Connect

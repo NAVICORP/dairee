@@ -44,10 +44,8 @@ def env(name):
 
 
 def p8():
-    raw = env('APP_STORE_CONNECT_KEY_P8')
-    if 'BEGIN PRIVATE KEY' in raw:
-        return raw.encode()
-    return base64.b64decode(raw)
+    from p8 import pem  # .github/scripts/p8.py: the key as a clean PEM, however it was pasted
+    return pem(env('APP_STORE_CONNECT_KEY_P8')).encode()
 
 
 def token():
