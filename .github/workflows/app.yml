@@ -197,7 +197,7 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'upload' }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then echo "No signing secrets: the APK is signed with the debug key, fine for testing."; exit 0; fi
@@ -258,8 +258,8 @@ jobs:
       - name: TestFlight secrets
         if: env.TESTFLIGHT == 'true'
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '45M72FMM6U' }}
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
         run: |
@@ -276,8 +276,8 @@ jobs:
       - name: Certificate and profile from App Store Connect
         if: env.TESTFLIGHT == 'true'
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '45M72FMM6U' }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
         run: |
@@ -308,7 +308,7 @@ jobs:
       - name: Upload to TestFlight
         if: env.TESTFLIGHT == 'true'
         env:
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           set -e
@@ -331,8 +331,8 @@ jobs:
       - name: Revoke the run's certificate and profile
         if: always() && env.TESTFLIGHT == 'true'
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '45M72FMM6U' }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
         run: |
