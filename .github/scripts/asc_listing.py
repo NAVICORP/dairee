@@ -111,7 +111,7 @@ def upload(set_id, path):
 
 
 def wait(shot_id, name):
-    for _ in range(90):
+    for _ in range(240):
         a = call('GET', f'/appScreenshots/{shot_id}')['data']['attributes']
         state = (a.get('assetDeliveryState') or {}).get('state')
         if state == 'COMPLETE':
@@ -121,8 +121,8 @@ def wait(shot_id, name):
             errs = (a.get('assetDeliveryState') or {}).get('errors') or []
             print(f"::error::{name} was not accepted: {'; '.join(e.get('description', e.get('code', '')) for e in errs)}")
             return False
-        time.sleep(4)
-    print(f'::error::{name} is still processing after 6 minutes.')
+        time.sleep(5)
+    print(f'::error::{name} is still processing after 20 minutes.')
     return False
 
 
@@ -154,12 +154,10 @@ def screenshots(loc_id, folder):
             'type': 'appScreenshotSets', 'attributes': {'screenshotDisplayType': kind},
             'relationships': {'appStoreVersionLocalization': {'data': {'type': 'appStoreVersionLocalizations', 'id': loc_id}}}}})['data']['id']
         print(f'Screenshots: made the {kind} set')
-    new = []
-    for f in files:
-        sid = upload(set_id, f)
-        if not wait(sid, os.path.basename(f)):
-            sys.exit(1)
-        new.append(sid)
+    # All up first, then wait: Apple works on them side by side.
+    new = [upload(set_id, f) for f in files]
+    if not all([wait(sid, os.path.basename(f)) for sid, f in zip(new, files)]):
+        sys.exit(1)
     call('PATCH', f'/appScreenshotSets/{set_id}/relationships/appScreenshots',
          {'data': [{'type': 'appScreenshots', 'id': i} for i in new]})
     print(f'Screenshots: {len(new)} in {kind}, in order')
