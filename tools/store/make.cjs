@@ -49,33 +49,33 @@ function css(W) {
    points, bezel 3.3 mm, display corners 55 pt. The app screen is drawn on a
    canvas below a status bar; its top, bottom and side edges are stretched to
    fill the space the status bar and home bar take. */
-function device(devW, shot, left, top, shadow) {
+function device(devW, shot, left, top, shadow, id = 'phone', extra = '') {
   const bez = devW * 0.0424, scrW = devW - bez * 2, scrH = scrW * 932 / 430;
   const inner = scrW * 55 / 430, rad = inner + bez, pt = scrW / 430;
   const css = `
-  .dev{position:absolute;left:${left}px;top:${top}px;width:${devW}px;height:${scrH + bez * 2}px;border-radius:${rad}px;
+  #${id}{position:absolute;left:${left}px;top:${top}px;width:${devW}px;height:${scrH + bez * 2}px;border-radius:${rad}px;
     background:#04070D;padding:${bez}px;
-    box-shadow:inset 0 0 0 ${devW * 0.0055}px #5B6578,inset 0 0 0 ${devW * 0.013}px #1A2130,${shadow}}
-  .dev::before,.dev::after{content:"";position:absolute;width:${devW * 0.011}px;background:#2C3444}
-  .dev::before{right:${-devW * 0.009}px;top:27%;height:11.5%;border-radius:0 4px 4px 0}
-  .dev::after{left:${-devW * 0.009}px;top:17%;height:22%;border-radius:4px 0 0 4px;
+    box-shadow:inset 0 0 0 ${devW * 0.0055}px #5B6578,inset 0 0 0 ${devW * 0.013}px #1A2130,${shadow};${extra}}
+  #${id}::before,#${id}::after{content:"";position:absolute;width:${devW * 0.011}px;background:#2C3444}
+  #${id}::before{right:${-devW * 0.009}px;top:27%;height:11.5%;border-radius:0 4px 4px 0}
+  #${id}::after{left:${-devW * 0.009}px;top:17%;height:22%;border-radius:4px 0 0 4px;
     background:linear-gradient(#2C3444 0 15%,transparent 15% 29%,#2C3444 29% 60%,transparent 60% 69%,#2C3444 69% 100%)}
-  .scr{position:relative;width:${scrW}px;height:${scrH}px;border-radius:${inner}px;overflow:hidden;background:#F7F9FC}
-  .scr canvas{position:absolute;inset:0;width:${scrW}px;height:${scrH}px}
-  .island{position:absolute;left:50%;top:${11 * pt}px;width:${126 * pt}px;height:${37.3 * pt}px;margin-left:${-63 * pt}px;border-radius:99px;background:#000}
-  .bar{position:absolute;left:0;right:0;top:0;height:${59 * pt}px;display:flex;align-items:center;justify-content:space-between;padding:0 ${31 * pt}px 0 ${46 * pt}px;
+  #${id} .scr{position:relative;width:${scrW}px;height:${scrH}px;border-radius:${inner}px;overflow:hidden;background:#F7F9FC}
+  #${id} .scr canvas{position:absolute;inset:0;width:${scrW}px;height:${scrH}px}
+  #${id} .island{position:absolute;left:50%;top:${11 * pt}px;width:${126 * pt}px;height:${37.3 * pt}px;margin-left:${-63 * pt}px;border-radius:99px;background:#000}
+  #${id} .bar{position:absolute;left:0;right:0;top:0;height:${59 * pt}px;display:flex;align-items:center;justify-content:space-between;padding:0 ${31 * pt}px 0 ${46 * pt}px;
     color:#0B1B33;font-family:-apple-system,"SF Pro Text","Manrope",sans-serif;font-weight:600;font-size:${17 * pt}px}
-  .sys{display:flex;gap:${6 * pt}px;align-items:center}
-  .sys svg{display:block;height:${11.5 * pt}px;width:auto;fill:currentColor}
-  .sys .bat{height:${13 * pt}px}
-  .sys .wifi{fill:none;stroke:currentColor}
-  .home{position:absolute;left:50%;bottom:${8 * pt}px;width:${144 * pt}px;height:${5 * pt}px;margin-left:${-72 * pt}px;border-radius:9px;background:#0B1B33}`;
-  const html = `<div class="dev"><div class="scr"><canvas id="c" width="${Math.round(scrW)}" height="${Math.round(scrH)}"></canvas>${BAR}<i class="island"></i><i class="home"></i></div></div>
+  #${id} .sys{display:flex;gap:${6 * pt}px;align-items:center}
+  #${id} .sys svg{display:block;height:${11.5 * pt}px;width:auto;fill:currentColor}
+  #${id} .sys .bat{height:${13 * pt}px}
+  #${id} .sys .wifi{fill:none;stroke:currentColor}
+  #${id} .home{position:absolute;left:50%;bottom:${8 * pt}px;width:${144 * pt}px;height:${5 * pt}px;margin-left:${-72 * pt}px;border-radius:9px;background:#0B1B33}`;
+  const html = `<div class="dev" id="${id}"><div class="scr"><canvas width="${Math.round(scrW)}" height="${Math.round(scrH)}"></canvas>${BAR}<i class="island"></i><i class="home"></i></div></div>
   <script>
   (() => {
     const img = new Image();
     img.onload = () => {
-      const cv = document.getElementById('c'), g = cv.getContext('2d');
+      const cv = document.querySelector('#${id} canvas'), g = cv.getContext('2d');
       const W = cv.width, H = cv.height, top = Math.round(${54 * pt}), bottom = Math.round(${20 * pt});
       const iw = img.naturalWidth, ih = img.naturalHeight;
       const h = H - top - bottom, w = Math.round(iw * h / ih), x = Math.round((W - w) / 2);
@@ -89,7 +89,7 @@ function device(devW, shot, left, top, shadow) {
       g.drawImage(img, iw - 1, 0, 1, 1, x + w, 0, W - x - w, top);
       g.drawImage(img, 0, ih - 1, 1, 1, 0, top + h, x, bottom);
       g.drawImage(img, iw - 1, ih - 1, 1, 1, x + w, top + h, W - x - w, bottom);
-      window.drawn = true;
+      window.drawn = (window.drawn || 0) + 1;
     };
     img.src = ${JSON.stringify(url(shot))};
   })();
@@ -135,7 +135,7 @@ function featurePage(shot) {
   ${d.html}</body></html>`;
 }
 
-(async () => {
+if (require.main === module) (async () => {
   const pick = (name) => {
     const f = path.join(SHOTS, `${name}.png`);
     if (!fs.existsSync(f)) throw new Error(`missing ${name}.png in ${SHOTS}`);
@@ -143,13 +143,13 @@ function featurePage(shot) {
   };
   const tmp = fs.mkdtempSync('/tmp/dairee-store-');
   const browser = await chromium.launch();
-  async function render(html, W, H, file, canvas = true) {
+  async function render(html, W, H, file, phones = 1) {
     const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
     const f = path.join(tmp, 'p.html');
     fs.writeFileSync(f, html);
     await page.goto('file://' + f);
     await page.evaluate(() => document.fonts.ready);
-    if (canvas) await page.waitForFunction(() => window.drawn === true);
+    if (phones) await page.waitForFunction((n) => (window.drawn || 0) >= n, phones);
     await page.waitForTimeout(150);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     await page.screenshot({ path: file, clip: { x: 0, y: 0, width: W, height: H } });
@@ -163,6 +163,8 @@ function featurePage(shot) {
   }
   await render(featurePage(pick(FEATURE)), 1024, 500, path.join(OUT, 'play', 'feature.png'));
   await render(`<!doctype html><html><head><style>*{margin:0}body{width:512px;height:512px}img{display:block;width:512px;height:512px}</style></head><body><img src="${url(ICON)}"></body></html>`,
-    512, 512, path.join(OUT, 'play', 'icon.png'), false);
+    512, 512, path.join(OUT, 'play', 'icon.png'), 0);
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });
+
+module.exports = { device, css, url, BAR, FONTS, ICON };

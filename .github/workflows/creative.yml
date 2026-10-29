@@ -1,0 +1,36 @@
+# Uploads the App Store creative assets (store/creative/*.png on the
+# `store-pictures` branch: the product page header and the search results
+# picture) to the app's Asset Library. It doesn't place them or send them for
+# review. Runs by hand: Actions > Store creative assets > Run workflow.
+# The pictures come from tools/store/creative.cjs.
+#
+# Uses the same App Store Connect key secrets as app.yml.
+name: Store creative assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-creative
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Creative pictures
+        run: |
+          git fetch --depth=1 origin store-pictures
+          git archive FETCH_HEAD store/creative | tar -x -C "$RUNNER_TEMP"
+          ls -l "$RUNNER_TEMP/store/creative"
+      - run: pip install --quiet pyjwt cryptography
+      - name: Upload to the Asset Library
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
+          APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+        run: python3 .github/scripts/asc_creative.py "$RUNNER_TEMP"/store/creative/*.png
