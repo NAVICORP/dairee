@@ -1187,16 +1187,20 @@ class _Building extends StatelessWidget {
               child: Row(children: [
                 Icon(icon, size: 20, color: tone.fg),
                 const SizedBox(width: 8),
-                Flexible(
-                  child: Text(title.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: _m(14, FontWeight.w800, tone.fg)),
+                Expanded(
+                  child: Row(children: [
+                    Flexible(
+                      child: Text(title.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: _m(14, FontWeight.w800, tone.fg)),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                      decoration: BoxDecoration(color: tone.badge, borderRadius: BorderRadius.circular(99)),
+                      child: Text('$done/${stops.length}', style: _m(12, FontWeight.w700, tone.fg).merge(T.tabular)),
+                    ),
+                  ]),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                  decoration: BoxDecoration(color: tone.badge, borderRadius: BorderRadius.circular(99)),
-                  child: Text('$done/${stops.length}', style: _m(12, FontWeight.w700, tone.fg).merge(T.tabular)),
-                ),
-                const Spacer(),
                 AnimatedRotation(
                   turns: open ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
