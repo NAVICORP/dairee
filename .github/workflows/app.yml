@@ -260,7 +260,7 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '45M72FMM6U' }}
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
           KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
         run: |
           missing=""
@@ -278,7 +278,7 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '45M72FMM6U' }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
           APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
         run: |
           set -e
@@ -309,7 +309,7 @@ jobs:
         if: env.TESTFLIGHT == 'true'
         env:
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
         run: |
           set -e
           ipa=$(ls app/build/ios/ipa/*.ipa | head -1)
@@ -333,7 +333,7 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '45M72FMM6U' }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
           APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
         run: |
           [ -x "$RUNNER_TEMP/venv/bin/python" ] || exit 0
