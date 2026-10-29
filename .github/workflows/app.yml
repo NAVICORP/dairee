@@ -37,6 +37,10 @@ on:
         description: "Sign the iOS build and upload it to TestFlight"
         type: boolean
         default: false
+      play_bundle:
+        description: "Put the signed Android bundle on the play-bundle branch, for uploading in Play Console"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -223,6 +227,24 @@ jobs:
           name: dairee-android-bundle
           path: app/build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
+      # Play Console takes the bundle as an upload. On request, the bundle also
+      # goes to the play-bundle branch (one file, replaced each time), where
+      # the Play Console page can fetch it. It holds nothing secret: the
+      # bundle is signed, and the key stays in the repository secrets.
+      - name: The bundle on the play-bundle branch
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.play_bundle && hashFiles('app/android/key.properties') != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v=$(grep '^version:' app/pubspec.yaml | sed 's/version: *//; s/+.*//')
+          f="dairee-$v-${{ github.run_number }}.aab"
+          mkdir -p "$RUNNER_TEMP/pb" && cp app/build/app/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/pb/$f"
+          cd "$RUNNER_TEMP/pb"
+          git init -q -b play-bundle
+          git add "$f"
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "Play bundle $f"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" play-bundle
+          echo "::notice title=Play bundle::https://raw.githubusercontent.com/${{ github.repository }}/play-bundle/$f"
 
   ios:
     needs: check
