@@ -1,0 +1,39 @@
+# Fills in Dairee's App Store page for a version still being prepared: the
+# text and links from docs/STORE.md, the screenshots from the store-pictures
+# branch (store/ios/1.png, 2.png, ...) and the newest processed build.
+# Runs by hand: Actions > App Store page > Run workflow.
+#
+# Uses the same App Store Connect key secrets as app.yml.
+name: App Store page
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "App Store version to fill in"
+        default: "1.0.0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-store-page
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Store pictures
+        run: |
+          git fetch --depth=1 origin store-pictures
+          git archive FETCH_HEAD store/ios | tar -x -C "$RUNNER_TEMP"
+          ls -l "$RUNNER_TEMP/store/ios"
+      - run: pip install --quiet pyjwt cryptography
+      - name: Fill in the App Store page
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
+          APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+        run: python3 .github/scripts/asc_listing.py "$RUNNER_TEMP/store/ios" "${{ inputs.version || '1.0.0' }}"
