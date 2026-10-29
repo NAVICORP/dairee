@@ -123,6 +123,27 @@ The first release of Dairee: the milk round, packing, pauses, bills and payments
 - Export compliance: no non-exempt encryption (ITSAppUsesNonExemptEncryption is false in Info.plist).
 - Pricing: free, all countries and regions.
 
+## Pictures and video
+
+- Store pictures: `tools/store/make.cjs` (App Store 1290 x 2796, Play 1080 x 1920, feature graphic, icon). App Store header and search results pictures: `tools/store/creative.cjs`, uploaded to the Asset Library by Actions > Store creative assets. All on the `store-pictures` branch under `store/`.
+- Intro video (1920 x 1080, 37 s) and YouTube thumbnail (1280 x 720): `tools/store/video.cjs` and `tools/store/music.py`. Upload it to YouTube (Public or Unlisted, ads off, not made for kids, not age restricted), then put the link in Play's store listing under Video.
+
+**YouTube title**
+
+```
+Dairee: run your dairy from your phone
+```
+
+**YouTube description**
+
+```
+Dairee runs a small dairy from one phone: the morning and evening milk rounds, packing, pauses and changes for any day, monthly bills and payments, and the herd.
+
+Tick every door on the round, see who still has to pay, and let customers see their own milk, bills and a code to pay on their phone. Record milking, health and breeding for every cow.
+
+Free on Android, iPhone and the web: https://dairee.skifi.co
+```
+
 ## The review account
 
 Both stores sign in with the same account, the one Kuree's reviewers use: **contact@skifi.co** with its review password (the owner types it in; it is never written down here). Sign in with Email > Use a password. That account is the admin of a sample farm, **Sample Dairy**, full of made-up customers, rounds, bills and cows (supabase/migrations/0010_review_farm.sql). To delete the account: Profile > Delete account (please don't, on the review account).
