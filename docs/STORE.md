@@ -97,6 +97,12 @@ Terms: https://dairee.skifi.co/terms
 The first release of Dairee: the milk round, packing, pauses, bills and payments, the customer's page, the herd and staff.
 ```
 
+**What's new in 1.0.1** (App Store and Google Play, 4000 max)
+
+```
+A new delivery screen. Pick the day and the morning or evening round, see how far the round has got, and work through every building: tick each door, take back the bottle, and see the bottles still out from earlier days. Filter by building, delivery person or quantity, and report a problem at any door.
+```
+
 ## Google Play
 
 - App category: Business. Tags: Business, Productivity.

@@ -176,7 +176,12 @@ def main():
     app_id = app[0]['id']
     vs = call('GET', f'/apps/{app_id}/appStoreVersions?filter[platform]=IOS&filter[versionString]={version}')['data']
     if not vs:
-        sys.exit(f'::error::No iOS version {version}.')
+        # An update: the new version, made the way App Store Connect's + does.
+        made = call('POST', '/appStoreVersions', {'data': {'type': 'appStoreVersions',
+            'attributes': {'platform': 'IOS', 'versionString': version},
+            'relationships': {'app': {'data': {'type': 'apps', 'id': app_id}}}}})['data']
+        print(f'Version {version}: made')
+        vs = [made]
     v = vs[0]
     if v['attributes'].get('appVersionState') not in EDITABLE and v['attributes'].get('appStoreState') not in EDITABLE:
         sys.exit(f"::error::Version {version} is {v['attributes'].get('appVersionState')}; it cannot be changed now.")
@@ -191,6 +196,9 @@ def main():
     loc = next((x for x in locs if x['attributes']['locale'] == LOCALE), None)
     attrs = {'description': block(doc, 'Full description'), 'keywords': block(doc, 'Keywords'),
              'promotionalText': block(doc, 'Promotional text'), 'supportUrl': f'{SITE}/support', 'marketingUrl': SITE}
+    # What's new, for an update (the first version has none).
+    if f"**What's new in {version}**" in doc:
+        attrs['whatsNew'] = block(doc, f"What's new in {version}")
     if loc:
         call('PATCH', f"/appStoreVersionLocalizations/{loc['id']}", {'data': {
             'type': 'appStoreVersionLocalizations', 'id': loc['id'], 'attributes': attrs}})

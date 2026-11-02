@@ -10,8 +10,12 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "App Store version to fill in"
-        default: "1.0.0"
+        description: "App Store version to fill in (made if it is a new update)"
+        default: "1.0.1"
+      status_only:
+        description: "Only report where the app stands on the App Store, change nothing"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,15 +29,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - run: pip install --quiet pyjwt cryptography
+        if: ${{ inputs.status_only }}
+      - name: Where the app stands
+        if: ${{ inputs.status_only }}
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
+          APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+        run: python3 .github/scripts/asc_status.py
       - name: Store pictures
+        if: ${{ !inputs.status_only }}
         run: |
           git fetch --depth=1 origin store-pictures
           git archive FETCH_HEAD store/ios | tar -x -C "$RUNNER_TEMP"
           ls -l "$RUNNER_TEMP/store/ios"
       - run: pip install --quiet pyjwt cryptography
+        if: ${{ !inputs.status_only }}
       - name: Fill in the App Store page
+        if: ${{ !inputs.status_only }}
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID || 'J72XQ7U8QY' }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID || 'f3d54e68-e67b-4c6e-bb31-37f4fe57d6fc' }}
           APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
-        run: python3 .github/scripts/asc_listing.py "$RUNNER_TEMP/store/ios" "${{ inputs.version || '1.0.0' }}"
+        run: python3 .github/scripts/asc_listing.py "$RUNNER_TEMP/store/ios" "${{ inputs.version || '1.0.1' }}"
