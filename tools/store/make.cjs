@@ -126,7 +126,7 @@ function featurePage(shot) {
   .glow{position:absolute;inset:0;background:radial-gradient(420px 320px at 0% 100%,rgba(125,196,255,.16),transparent 70%)}
   .copy{position:absolute;left:64px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:18px;width:540px}
   .mark{display:flex;align-items:center;gap:20px}
-  .mark img{width:104px;height:104px;border-radius:26px;box-shadow:0 18px 36px -16px rgba(0,0,0,.7)}
+  .mark img{width:104px;height:104px;border-radius:23px;box-shadow:0 18px 36px -16px rgba(0,0,0,.7),0 0 0 1.5px rgba(255,255,255,.18)}
   .mark span{font-family:"Bricolage";font-weight:700;font-size:92px;line-height:1}
   p{font-size:31px;font-weight:600;color:rgba(211,227,251,.92);line-height:1.3}
   p b{color:#7DC4FF;font-weight:700}
