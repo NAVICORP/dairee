@@ -130,6 +130,12 @@ where e.slot = 'morning' and not e.paused and e.qty > 0 and c.building = 'Palm G
 select public.set_note((select id from public.customers where name = 'Rajesh Pillai'), public.farm_today(current_setting('demo.farm')::uuid),
                        'morning', 'Left with the security');
 reset role;
+-- Ticked this morning, whatever the clock says when the demo is made.
+update public.delivery_records d
+   set delivered_at = (d.delivery_date + time '06:12')::timestamp at time zone 'Asia/Kolkata'
+                      + make_interval(mins => abs(hashtext(d.customer_id::text)) % 35)
+ where d.farm_id = current_setting('demo.farm')::uuid
+   and d.delivery_date = public.farm_today(d.farm_id) and d.slot = 'morning' and d.delivered;
 
 -- Bills for last month, and some payments.
 select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com', current_setting('demo.farm')::uuid);
