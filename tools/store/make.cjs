@@ -23,6 +23,7 @@ const ICON = path.join(REPO, 'app', 'assets', 'brand', 'icon.png');
 const FRAMES = [
   ['10-round', 'Tick every door <b>on the round</b>'],
   ['09-today', 'See how far <b>the round has got</b>'],
+  ['11-round-stops', 'Bottles back, <b>right at the door</b>'],
   ['20-customers', 'Every customer, <b>by building</b>'],
   ['24-pause-sheet', 'Pause or change <b>any day</b>'],
   ['41-payments', 'See who <b>still has to pay</b>'],
