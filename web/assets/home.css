@@ -75,8 +75,6 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 .hero h1{font-size:clamp(50px,6.6vw,94px);line-height:.97;max-width:10.5ch}
 .lead{font-size:20px;line-height:1.55;color:rgba(228,238,252,.86);max-width:34ch;text-wrap:balance}
 .hero__get{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
-.hero__links,.cta__links{display:flex;flex-wrap:wrap;gap:4px 26px}
-.hero__link{display:inline-flex;align-items:center;gap:8px;padding:12px 4px;margin:-12px -4px;font-weight:800;font-size:16px;color:var(--glow);text-decoration:none}
 /* the store buttons, as on kureeapp.com */
 .stores{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .store{display:inline-flex;align-items:center;justify-content:center;gap:11px;width:196px;height:58px;padding:0 16px 0 14px;border-radius:14px;background:#000;color:#fff;text-decoration:none;
@@ -91,7 +89,6 @@ a.store:active{transform:translateY(0) scale(.98)}
 .hero__facts{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:15px;font-weight:700;color:rgba(228,238,252,.8)}
 .hero__facts span{display:inline-flex;align-items:center;gap:8px}
 .hero__facts .ic{width:17px;height:17px;color:var(--glow)}
-.cta__link{display:inline-flex;align-items:center;gap:8px;padding:12px 4px;margin:-12px -4px;font-weight:800;font-size:16px;color:var(--glow);text-decoration:none}
 .rise{opacity:0;transform:translateY(18px);animation:rise .9s var(--ease) forwards}
 .hero__copy .rise:nth-child(2){animation-delay:.08s}
 .hero__copy .rise:nth-child(3){animation-delay:.16s}
@@ -392,7 +389,6 @@ a.store:active{transform:translateY(0) scale(.98)}
 .cta h2{font-size:clamp(40px,5.4vw,72px);line-height:1}
 .cta p{color:rgba(228,238,252,.86);font-size:19px}
 .cta .stores{justify-content:center;margin-top:10px}
-.cta__links{justify-content:center;margin-top:-4px}
 
 .getbar{display:none}
 
@@ -411,7 +407,7 @@ a.store:active{transform:translateY(0) scale(.98)}
   .hero__grid{grid-template-columns:1fr;gap:20px}
   .hero__copy{justify-items:center;text-align:center}
   .hero h1{max-width:12ch}
-  .hero__get,.hero__links,.hero__facts,.hero .stores{justify-content:center}
+  .hero__get,.hero__facts,.hero .stores{justify-content:center}
   .stage{min-height:620px}
   .wall__grid{grid-template-columns:1fr;gap:44px}
   .wall__copy{justify-items:center;text-align:center}
@@ -447,7 +443,6 @@ a.store:active{transform:translateY(0) scale(.98)}
   .lead{font-size:17px;line-height:1.5}
   .hero .lead{max-width:30ch}
   .hero__get{width:100%;margin-top:4px}
-  .hero__link{font-size:15px}
   .stores{gap:10px;width:100%;justify-content:center;flex-wrap:nowrap}
   .store{flex:1 1 0;width:auto;min-width:0;max-width:200px;height:54px;gap:9px;padding:0 10px;border-radius:13px}
   .store svg{width:25px;height:25px}
@@ -573,6 +568,12 @@ a.store:active{transform:translateY(0) scale(.98)}
   .d3--fchurn{right:2%;top:-24px;width:96px}
   .d3--sbarn{right:0;top:-56px;width:120px}
 }
+/* tablets: the cow and the bottle sit under the store buttons */
+@media (max-width:900px){
+  .cta{padding-bottom:150px}
+  .d3--ccow{width:130px;left:4%}
+  .d3--cbottle{width:48px;right:8%;bottom:26px}
+}
 @media (max-width:640px){
   .d3 img{filter:drop-shadow(0 14px 16px rgba(4,17,43,.3))}
   .d3--hbottle{width:62px;left:max(10px,calc(50% - 178px));top:36px}
@@ -586,6 +587,8 @@ a.store:active{transform:translateY(0) scale(.98)}
   .d3--cbubble{width:80px;right:max(8px,calc(50% - 176px));top:2%}
   .d3--ccoins{width:78px;left:max(8px,calc(50% - 176px));bottom:4%}
   .d3--sbarn{width:62px;right:-2px;top:-16px}
+  /* room under the store buttons for the cow */
+  .cta{padding-bottom:112px}
   .d3--ccow{width:96px;left:-14px;top:auto;bottom:-8px}
   .d3--ctick{width:70px;right:-10px;top:18px}
   .d3--cbottle{display:none}
