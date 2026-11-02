@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/format.dart';
-import 'brand_mark.dart';
 import 'theme.dart';
 
 enum KButtonKind { primary, secondary, ghost, danger, blue }
@@ -1168,9 +1167,9 @@ class PageBody extends StatelessWidget {
   }
 }
 
-/// The logo as it is shown: the D, the sprout and the field in white on a
-/// blue tile with rounded corners, like the app icon. Drawn, not loaded, so
-/// it is there on the very first frame, at any size.
+/// The logo as it is shown: the bottle of milk and the tick on the navy
+/// tile, with rounded corners, like the app icon (assets/brand/mark.png,
+/// written by tools/brand/brand.py).
 class DaireeIcon extends StatelessWidget {
   const DaireeIcon({super.key, this.size = 84, this.shadow = false});
   final double size;
@@ -1178,68 +1177,18 @@ class DaireeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tile = Semantics(label: 'Dairee', image: true, child: CustomPaint(size: Size.square(size), painter: const _TilePainter()));
+    final tile = Semantics(
+      label: 'Dairee',
+      image: true,
+      child: Image.asset('assets/brand/mark.png', width: size, height: size, filterQuality: FilterQuality.high, gaplessPlayback: true),
+    );
     if (!shadow) return tile;
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.24),
-        boxShadow: const [BoxShadow(color: Color(0x4D1064D9), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 14))],
+        borderRadius: BorderRadius.circular(size * 0.2237),
+        boxShadow: const [BoxShadow(color: Color(0x590B2A63), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 14))],
       ),
       child: tile,
     );
   }
-}
-
-class _TilePainter extends CustomPainter {
-  const _TilePainter();
-  static final Path _main = daireeMain();
-  static final Path _light = daireeLight();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width;
-    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(s * 0.24)), Paint()..color = const Color(daireeMainColour));
-    // The logo's 1000 point box, 60 of every 100 points across, centred.
-    canvas.save();
-    canvas.translate(s * 0.2, s * 0.2);
-    canvas.scale(s * 0.6 / 1000);
-    final white = Paint()..color = Colors.white;
-    canvas.drawPath(_main, white);
-    canvas.drawPath(_light, white);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _TilePainter old) => false;
-}
-
-/// Dairee's logo (the D with a sprout and a field), drawn from the vector
-/// shapes tools/brand/brand.py traced from the supplied artwork. Drawn, not
-/// loaded, so it is there on the very first frame, at any size.
-class DaireeMark extends StatelessWidget {
-  const DaireeMark({super.key, this.size = 40});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) =>
-      Semantics(label: 'Dairee', image: true, child: CustomPaint(size: Size.square(size), painter: const _MarkPainter()));
-}
-
-class _MarkPainter extends CustomPainter {
-  const _MarkPainter();
-
-  static final Path _main = daireeMain();
-  static final Path _light = daireeLight();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.scale(size.width / 1000);
-    canvas.drawPath(_main, Paint()..color = const Color(daireeMainColour));
-    canvas.drawPath(_light, Paint()..color = const Color(daireeLightColour));
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _MarkPainter old) => false;
 }

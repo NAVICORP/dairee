@@ -1,114 +1,123 @@
-"""Dairee's logo: the D with a sprout and a field (tools/brand/logo-source.png),
-traced into vector shapes once, then written out as every icon the app, the
+"""Dairee's logo: a bottle of milk with a tick, on deep navy. The round,
+delivered. Drawn here as SVG, then written out as every icon the app, the
 stores and the site use, so a change here reaches all of them at once.
 
-    pip install potracer numpy pillow playwright
+    pip install numpy pillow playwright
     python3 tools/brand/brand.py
 
 Writes:
-- web/assets/brand/dairee-mark.svg   the logo as vector, in its two blues (for print)
-- web/assets/brand/dairee-icon.svg   the logo as it is shown: white on a blue tile
-- app/lib/ui/brand_mark.dart         the same shapes as Flutter paths
+- tools/brand/logo.svg                the logo as artwork, 1024 x 1024
+- web/assets/brand/dairee-icon.svg    the icon with rounded corners
+- web/assets/brand/dairee-mark.svg    the bottle and tick alone, for print
 - the app, Android, iPhone, web app and site icons (PNG and favicon.ico)
+- web/assets/brand/og.png             the picture shown when a link is shared
 """
+import base64
 import io
-import json
 import os
 import struct
 
 import numpy as np
-import potrace
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-SOURCE = os.path.join(HERE, 'logo-source.png')
 
-MAIN = '#1064D9'     # the D, the sprout and the field
-LIGHT = '#4895EE'    # the path across the field
-WHITE = '#FFFFFF'
-PAPER = '#F7F9FC'
+NAVY = '#0B2A63'     # the tile, and the Android icon background
+BLUE = '#1064D9'     # the cap and the tick
 
+# ---------------------------------------------------------------- the artwork
 
-# ---------------------------------------------------------------- tracing
+BOTTLE = ('M412 292 L612 292 L612 334 C612 396 724 414 724 505 L724 810 '
+          'C724 850 694 880 654 880 L370 880 C330 880 300 850 300 810 L300 505 '
+          'C300 414 412 396 412 334 Z')
+CAP = dict(x=394, y=206, w=236, h=100, r=34)
+# Where the bottle and the tick sit on the 1024 board, found once by centring
+# the pair: the bottle leans back a little and the tick sits over its foot.
+BOTTLE_AT = 'translate(413,519) rotate(-10) scale(0.92) translate(-512,-560)'
+TICK_AT = (665, 691)
+TICK_R = 150
 
-def trace():
-    im = np.array(Image.open(SOURCE).convert('RGBA')).astype(int)
-    r, g, a = im[..., 0], im[..., 1], im[..., 3]
-    solid = a > 127
-    light = solid & (r > 45) & (g > 125)
-    main = solid & ~light
-
-    def curves(mask):
-        # potracer traces the False pixels, so it is handed the inverse.
-        path = potrace.Bitmap(~mask).trace(turdsize=20, alphamax=1.0, opticurve=True, opttolerance=0.2)
-        out = []
-        for c in path:
-            cmds = [('M', (c.start_point.x, c.start_point.y))]
-            for s in c.segments:
-                if s.is_corner:
-                    cmds += [('L', (s.c.x, s.c.y)), ('L', (s.end_point.x, s.end_point.y))]
-                else:
-                    cmds.append(('C', (s.c1.x, s.c1.y, s.c2.x, s.c2.y, s.end_point.x, s.end_point.y)))
-            out.append(cmds)
-        return out
-
-    shapes = {'main': curves(main), 'light': curves(light)}
-    ys, xs = np.nonzero(solid)
-    box = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
-    return shapes, box
+DEFS = f'''<defs>
+  <radialGradient id="bg" cx="45%" cy="30%" r="78%">
+    <stop offset="0" stop-color="#1F55A8"/><stop offset=".55" stop-color="{NAVY}"/><stop offset="1" stop-color="#04112B"/>
+  </radialGradient>
+  <linearGradient id="milk" x1="0" x2="1" y1="0" y2="0">
+    <stop offset="0" stop-color="#E6EFFC"/><stop offset=".28" stop-color="#F8FBFF"/>
+    <stop offset=".72" stop-color="#EEF4FD"/><stop offset="1" stop-color="#C9DAF2"/>
+  </linearGradient>
+  <linearGradient id="cap" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="{BLUE}"/>
+  </linearGradient>
+  <linearGradient id="tick" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="{BLUE}"/>
+  </linearGradient>
+  <clipPath id="bottle"><path d="{BOTTLE}"/></clipPath>
+  <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter>
+</defs>'''
 
 
-def normalise(shapes, box):
-    """Moves the logo into a 1000 x 1000 box, centred, keeping its proportions."""
-    x0, y0, x1, y1 = box
-    k = 1000 / max(x1 - x0, y1 - y0)
-    dx = (1000 - (x1 - x0) * k) / 2 - x0 * k
-    dy = (1000 - (y1 - y0) * k) / 2 - y0 * k
-    out = {}
-    for name, cs in shapes.items():
-        out[name] = [[(op, tuple(round(v * k + (dx if i % 2 == 0 else dy), 2) for i, v in enumerate(vals))) for op, vals in c] for c in cs]
-    return out
+def mark():
+    """The bottle and the tick, on nothing."""
+    cx, cy = TICK_AT
+    c = CAP
+    return f'''<g transform="{BOTTLE_AT}">
+    <ellipse cx="512" cy="905" rx="220" ry="34" fill="#04112B" opacity=".3" filter="url(#blur)"/>
+    <path d="{BOTTLE}" fill="url(#milk)"/>
+    <g clip-path="url(#bottle)"><rect x="338" y="470" width="36" height="340" rx="18" fill="#FFFFFF"/></g>
+    <path d="{BOTTLE}" fill="none" stroke="#FFFFFF" stroke-opacity=".75" stroke-width="6"/>
+    <rect x="{c['x']}" y="{c['y']}" width="{c['w']}" height="{c['h']}" rx="{c['r']}" fill="url(#cap)"/>
+    <rect x="{c['x'] + 22}" y="{c['y'] + 16}" width="{c['w'] - 44}" height="20" rx="10" fill="#FFFFFF" opacity=".32"/>
+  </g>
+  <g transform="translate({cx},{cy})">
+    <circle r="{TICK_R}" cy="22" fill="#04112B" opacity=".35" filter="url(#blur)"/>
+    <circle r="{TICK_R}" fill="url(#tick)"/>
+    <circle r="{TICK_R - 3}" fill="none" stroke="#FFFFFF" stroke-opacity=".4" stroke-width="6"/>
+    <path d="M-68 4 L-20 52 L72 -48" fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>'''
 
 
-def path_d(curves):
-    parts = []
-    for c in curves:
-        for op, v in c:
-            pts = ' '.join(f'{v[i]:g},{v[i + 1]:g}' for i in range(0, len(v), 2))
-            parts.append(f'{op}{pts}')
-        parts.append('Z')
-    return ' '.join(parts)
+def mono():
+    """One colour, for Android's themed icons: the bottle with a gap cut
+    round the tick, and the tick's mark cut out of its circle."""
+    cx, cy = TICK_AT
+    c = CAP
+    return f'''<mask id="gap" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+    <rect width="1024" height="1024" fill="#fff"/><circle cx="{cx}" cy="{cy}" r="{TICK_R + 26}" fill="#000"/>
+  </mask>
+  <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+    <rect width="1024" height="1024" fill="#fff"/>
+    <path transform="translate({cx},{cy})" d="M-68 4 L-20 52 L72 -48" fill="none" stroke="#000" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <g mask="url(#gap)"><g transform="{BOTTLE_AT}" fill="#fff">
+    <path d="{BOTTLE}"/><rect x="{c['x']}" y="{c['y']}" width="{c['w']}" height="{c['h']}" rx="{c['r']}"/>
+  </g></g>
+  <circle cx="{cx}" cy="{cy}" r="{TICK_R}" fill="#fff" mask="url(#cut)"/>'''
 
 
-# ---------------------------------------------------------------- drawing
-
-def svg(shapes, size, bg=None, scale=1.0, radius=0.0, fg=None):
-    """The logo at `size` px, at `scale` of the canvas, on `bg` (or clear).
-    With `fg`, every shape is drawn in that one colour (white on the blue
-    tile: the thin gap between the field and the path then shows blue)."""
-    tile = f'<rect width="1000" height="1000" rx="{radius * 1000:.0f}" fill="{bg}"/>' if bg else ''
-    t = f'translate({500 - 500 * scale:.2f},{500 - 500 * scale:.2f}) scale({scale})'
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="{size}" height="{size}">{tile}'
-            f'<g transform="{t}"><path fill-rule="evenodd" fill="{fg or MAIN}" d="{path_d(shapes["main"])}"/>'
-            f'<path fill-rule="evenodd" fill="{fg or LIGHT}" d="{path_d(shapes["light"])}"/></g></svg>')
+def svg(size=1024, tile=True, radius=0.0, scale=1.0, flat=None, body=None):
+    """The logo at `size` px. `tile` draws the navy board (or `flat`, one
+    colour), `radius` rounds its corners, `scale` shrinks the bottle and tick
+    towards the middle, `body` swaps in other artwork (the one-colour mark)."""
+    r = f' rx="{radius * 1024:.0f}"' if radius else ''
+    board = f'<rect width="1024" height="1024"{r} fill="{flat or "url(#bg)"}"/>' if tile else ''
+    t = f'translate({512 - 512 * scale:.2f},{512 - 512 * scale:.2f}) scale({scale})'
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="{size}" height="{size}">'
+            f'{DEFS}{board}<g transform="{t}">{body or mark()}</g></svg>')
 
 
-# How the logo is shown as an icon: the shapes in white on a blue tile, the
-# D taking 60 of every 100 points across.
-TILE = {'bg': MAIN, 'fg': WHITE, 'scale': 0.6}
-ROUND = 0.24  # corners, where the icon draws its own
+# How the logo is shown: the full board, the bottle and tick at full size.
+TILE = {'tile': True}
+ROUND = 0.2237  # the corner of an iPhone icon, where the icon draws its own
 
 
-def share_card(page, shapes):
+def share_card(page):
     """The picture shown when a link to the site is shared: 1200 x 630, the
-    app icon and the line from the top of the front page, on navy."""
-    import base64
+    icon and the line from the top of the front page, on navy."""
     def font(name):
         with open(os.path.join(ROOT, 'web/assets/fonts', name), 'rb') as f:
             return 'data:font/woff2;base64,' + base64.b64encode(f.read()).decode()
-    icon = svg(shapes, 150, **TILE, radius=ROUND)
     page.set_viewport_size({'width': 1200, 'height': 630})
     page.set_content(f"""<html><head><style>
 @font-face{{font-family:B;font-weight:500 800;src:url({font('bricolage.woff2')})}}
@@ -116,10 +125,10 @@ def share_card(page, shapes):
 body{{margin:0;width:1200px;height:630px;overflow:hidden;color:#fff;font-family:M;
   background:radial-gradient(900px 600px at 85% 0%,#1A4A97,#071C42 60%,#04112B)}}
 .in{{position:absolute;left:96px;top:96px;right:96px}}
-svg{{display:block;border-radius:36px;box-shadow:0 30px 60px -30px rgba(0,0,0,.7)}}
+svg{{display:block;border-radius:34px;box-shadow:0 30px 60px -30px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.12)}}
 h1{{font-family:B;font-weight:700;font-size:84px;line-height:1;margin:44px 0 0;letter-spacing:0}}
 p{{font-size:30px;font-weight:600;color:#D3E3FB;margin:26px 0 0;letter-spacing:0}}
-</style></head><body><div class="in">{icon}<h1>Run your dairy<br>from your phone.</h1>
+</style></head><body><div class="in">{svg(150, **TILE)}<h1>Run your dairy<br>from your phone.</h1>
 <p>dairee.skifi.co</p></div></body></html>""")
     page.evaluate('document.fonts.ready')
     page.wait_for_timeout(300)
@@ -128,79 +137,31 @@ p{{font-size:30px;font-weight:600;color:#D3E3FB;margin:26px 0 0;letter-spacing:0
     print('web/assets/brand/og.png 1200 x 630')
 
 
-def dart(shapes):
-    lines = [
-        '// Written by tools/brand/brand.py from tools/brand/logo-source.png. Do not edit by hand.',
-        "import 'dart:ui';",
-        '',
-        '/// The logo in a 1000 x 1000 box: the D, the sprout and the field.',
-        'Path daireeMain() => _p(_main);',
-        '',
-        '/// The light path across the field.',
-        'Path daireeLight() => _p(_light);',
-        '',
-        'const int daireeMainColour = 0xFF' + MAIN[1:] + ';',
-        'const int daireeLightColour = 0xFF' + LIGHT[1:] + ';',
-        '',
-        'Path _p(List<List<double>> curves) {',
-        '  final p = Path()..fillType = PathFillType.evenOdd;',
-        '  for (final c in curves) {',
-        '    var i = 0;',
-        '    while (i < c.length) {',
-        '      final op = c[i++];',
-        '      if (op == 0) {',
-        '        p.moveTo(c[i++], c[i++]);',
-        '      } else if (op == 1) {',
-        '        p.lineTo(c[i++], c[i++]);',
-        '      } else {',
-        '        p.cubicTo(c[i++], c[i++], c[i++], c[i++], c[i++], c[i++]);',
-        '      }',
-        '    }',
-        '    p.close();',
-        '  }',
-        '  return p;',
-        '}',
-        '',
-    ]
-    code = {'M': 0, 'L': 1, 'C': 2}
-    for name in ('main', 'light'):
-        lines.append(f'const List<List<double>> _{name} = [')
-        for c in shapes[name]:
-            flat = []
-            for op, v in c:
-                flat.append(str(code[op]))
-                flat += [f'{x:g}' for x in v]
-            lines.append('  [' + ', '.join(f if '.' in f else f + '.0' for f in flat) + '],')
-        lines.append('];')
-        lines.append('')
-    return '\n'.join(lines)
-
-
 def main():
-    shapes, box = trace()
-    shapes = normalise(shapes, box)
-
-    with open(os.path.join(ROOT, 'web/assets/brand/dairee-mark.svg'), 'w') as f:
-        f.write(svg(shapes, 1000).replace(' width="1000" height="1000"', ''))
+    with open(os.path.join(HERE, 'logo.svg'), 'w') as f:
+        f.write(svg(**TILE).replace(' width="1024" height="1024"', ''))
     with open(os.path.join(ROOT, 'web/assets/brand/dairee-icon.svg'), 'w') as f:
-        f.write(svg(shapes, 1000, **TILE, radius=ROUND).replace(' width="1000" height="1000"', ''))
-    with open(os.path.join(ROOT, 'app/lib/ui/brand_mark.dart'), 'w') as f:
-        f.write(dart(shapes))
+        f.write(svg(**TILE, radius=ROUND).replace(' width="1024" height="1024"', ''))
+    with open(os.path.join(ROOT, 'web/assets/brand/dairee-mark.svg'), 'w') as f:
+        f.write(svg(tile=False).replace(' width="1024" height="1024"', ''))
 
     out = {}
 
     def want(path, size, **kw):
         out[os.path.join(ROOT, path)] = (size, kw)
 
-    # The app's own copies.
+    # The app's own copies: the store icon, and the rounded tile it shows.
     want('app/assets/brand/icon.png', 1024, **TILE)
     want('app/assets/brand/mark.png', 512, **TILE, radius=ROUND)
-    want('app/assets/brand/icon-foreground.png', 1024, fg=WHITE, scale=0.4)
-    # Android: the full icon for old launchers; the adaptive foreground (on the
-    # blue of ic_launcher_background) keeps the D inside the 66 of 108 safe circle.
+    # Android: the full icon for old launchers; adaptive icons get the navy
+    # board behind and the bottle and tick in front, inside the 66 of 108
+    # safe circle; themed icons get the one-colour mark.
     for d, s in {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}.items():
-        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher.png', s, **TILE, radius=0.22)
-        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher_foreground.png', int(s * 108 / 48), fg=WHITE, scale=0.4)
+        a = int(s * 108 / 48)
+        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher.png', s, **TILE, radius=ROUND)
+        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher_background.png', a, **TILE, body='<g/>')
+        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher_foreground.png', a, tile=False, scale=0.66)
+        want(f'app/android/app/src/main/res/mipmap-{d}/ic_launcher_monochrome.png', a, tile=False, scale=0.62, body=mono())
     # iPhone: square and opaque; iOS rounds the corners itself.
     for name, s in {'20x20@1x': 20, '20x20@2x': 40, '20x20@3x': 60, '29x29@1x': 29, '29x29@2x': 58, '29x29@3x': 87,
                     '40x40@1x': 40, '40x40@2x': 80, '40x40@3x': 120, '60x60@2x': 120, '60x60@3x': 180,
@@ -210,12 +171,12 @@ def main():
     for suffix, s in {'': 96, '@2x': 192, '@3x': 288}.items():
         want(f'app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage{suffix}.png', s, **TILE, radius=ROUND)
     # The web app.
-    want('app/web/favicon.png', 32, bg=MAIN, fg=WHITE, scale=0.68, radius=0.22)
+    want('app/web/favicon.png', 32, **TILE, radius=ROUND)
     want('app/web/icons/mark.png', 192, **TILE, radius=ROUND)
-    want('app/web/icons/Icon-192.png', 192, **TILE, radius=0.22)
-    want('app/web/icons/Icon-512.png', 512, **TILE, radius=0.22)
-    want('app/web/icons/Icon-maskable-192.png', 192, bg=MAIN, fg=WHITE, scale=0.48)
-    want('app/web/icons/Icon-maskable-512.png', 512, bg=MAIN, fg=WHITE, scale=0.48)
+    want('app/web/icons/Icon-192.png', 192, **TILE, radius=ROUND)
+    want('app/web/icons/Icon-512.png', 512, **TILE, radius=ROUND)
+    want('app/web/icons/Icon-maskable-192.png', 192, **TILE, scale=0.8)
+    want('app/web/icons/Icon-maskable-512.png', 512, **TILE, scale=0.8)
     want('app/web/icons/apple-touch-icon.png', 180, **TILE)
     # The site.
     want('web/assets/brand/icon-64.png', 64, **TILE, radius=ROUND)
@@ -227,19 +188,23 @@ def main():
         page = browser.new_page()
 
         def render(size, **kw):
-            page.set_viewport_size({'width': size, 'height': size})
-            page.set_content(f'<html><body style="margin:0;background:transparent">{svg(shapes, size, **kw)}</body></html>')
-            png = page.screenshot(omit_background=True, clip={'x': 0, 'y': 0, 'width': size, 'height': size})
-            im = Image.open(io.BytesIO(png))
-            # Store icons must be opaque where they have a full square tile.
-            return im.convert('RGB') if kw.get('bg') and not kw.get('radius') else im.convert('RGBA')
+            # Drawn four times over and scaled down, so small icons stay crisp.
+            big = size * 4 if size < 256 else size
+            page.set_viewport_size({'width': big, 'height': big})
+            page.set_content(f'<html><body style="margin:0;background:transparent">{svg(big, **kw)}</body></html>')
+            png = page.screenshot(omit_background=True, clip={'x': 0, 'y': 0, 'width': big, 'height': big})
+            im = Image.open(io.BytesIO(png)).convert('RGBA')
+            if big != size:
+                im = im.resize((size, size), Image.LANCZOS)
+            # Store icons must be opaque where they have a full square board.
+            return im.convert('RGB') if kw.get('tile', True) and not kw.get('radius') else im
 
         for path, (size, kw) in out.items():
             os.makedirs(os.path.dirname(path), exist_ok=True)
             render(size, **kw).save(path, optimize=True)
             print(os.path.relpath(path, ROOT), size)
-        ico = {s: render(s, bg=MAIN, fg=WHITE, scale=0.68, radius=0.22) for s in (16, 32, 48)}
-        share_card(page, shapes)
+        ico = {s: render(s, **TILE, radius=ROUND) for s in (16, 32, 48)}
+        share_card(page)
         browser.close()
 
     blobs = []
@@ -255,8 +220,23 @@ def main():
         data += blob
     with open(os.path.join(ROOT, 'web/favicon.ico'), 'wb') as f:
         f.write(head + entries + data)
-    print('web/favicon.ico, web/assets/brand/dairee-mark.svg, app/lib/ui/brand_mark.dart')
+    print('web/favicon.ico, tools/brand/logo.svg, web/assets/brand/dairee-icon.svg, dairee-mark.svg')
+
+
+def centre():
+    """Prints how far the bottle and tick sit from the middle of the board,
+    for setting BOTTLE_AT and TICK_AT."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': 1024, 'height': 1024})
+        page.set_content(f'<html><body style="margin:0;background:transparent">{svg(tile=False, body=mono())}</body></html>')
+        a = np.array(Image.open(io.BytesIO(page.screenshot(omit_background=True))).convert('RGBA'))[..., 3]
+        browser.close()
+    ys, xs = np.nonzero(a > 40)
+    print('box', xs.min(), ys.min(), xs.max(), ys.max(),
+          'off centre by', round((xs.min() + xs.max()) / 2 - 512), round((ys.min() + ys.max()) / 2 - 512))
 
 
 if __name__ == '__main__':
-    main()
+    import sys
+    centre() if sys.argv[1:] == ['centre'] else main()
