@@ -17,6 +17,7 @@ Needs: APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
 APP_STORE_CONNECT_KEY_P8 (the .p8 file, however it was pasted).
 Python packages: pyjwt, cryptography.
 """
+import hashlib
 import json
 import os
 import sys
@@ -115,7 +116,9 @@ def main():
 
     for f in files:
         base = os.path.splitext(os.path.basename(f))[0]
-        name = f'Dairee {base}'
+        # A short tag from the picture itself, so a new picture is a new asset.
+        tag = hashlib.sha1(open(f, 'rb').read()).hexdigest()[:6]
+        name = f'Dairee {base} {tag}'
         if name in existing:
             note(f'{name}: already in the Asset Library ({existing[name][1]}), skipped')
             continue
