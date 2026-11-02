@@ -24,8 +24,8 @@ const SITE = 'dairee.skifi.co';
 
 /* scenes: start, end (seconds), caption, subline, screens (crossfaded in order) */
 const SCENES = [
-  { a: 3.2, b: 8.2, cap: 'Both rounds <b>at a glance</b>', sub: 'Morning and evening, what is packed and what is left.', shots: ['09-today'] },
-  { a: 8.2, b: 13.4, cap: 'Pack it, then <b>tick every door</b>', sub: 'Litres, bottles to collect and who paused.', shots: ['13-packing', '10-round'] },
+  { a: 3.2, b: 8.2, cap: 'See how far <b>the round has got</b>', sub: 'Litres out, bottles to collect, building by building.', shots: ['09-today'] },
+  { a: 8.2, b: 13.4, cap: 'Pack it, then <b>tick every door</b>', sub: 'Done and the bottle back, right beside each door.', shots: ['13-packing', '10-round', '11-round-stops'] },
   { a: 13.4, b: 18.4, cap: 'Pause or change <b>any day</b>', sub: 'Customers ask in the app and you approve.', shots: ['20-customers', '24-pause-sheet', '30-changes'] },
   { a: 18.4, b: 23.2, cap: 'See who <b>still has to pay</b>', sub: 'Bills every month, payments in one tap.', shots: ['41-payments', '43-bill'] },
   { a: 23.2, b: 28.0, cap: 'Customers see <b>their own milk</b>', sub: 'Deliveries, bills and a code to pay, on their phone.', shots: ['90-portal-home', '92-portal-changes'] },

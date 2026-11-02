@@ -174,14 +174,28 @@ def main():
     if not app:
         sys.exit(f'::error::No app with bundle ID {BUNDLE_ID}.')
     app_id = app[0]['id']
-    vs = call('GET', f'/apps/{app_id}/appStoreVersions?filter[platform]=IOS&filter[versionString]={version}')['data']
+    every = call('GET', f'/apps/{app_id}/appStoreVersions?filter[platform]=IOS&limit=20')['data']
+    vs = [x for x in every if x['attributes'].get('versionString') == version]
+    released = [x for x in every if x['attributes'].get('versionString') != version]
     if not vs:
-        # An update: the new version, made the way App Store Connect's + does.
-        made = call('POST', '/appStoreVersions', {'data': {'type': 'appStoreVersions',
-            'attributes': {'platform': 'IOS', 'versionString': version},
-            'relationships': {'app': {'data': {'type': 'apps', 'id': app_id}}}}})['data']
-        print(f'Version {version}: made')
-        vs = [made]
+        waiting = [x for x in every if (x['attributes'].get('appVersionState') or x['attributes'].get('appStoreState')) in EDITABLE]
+        if waiting:
+            # A version never sent to Apple takes the new number, as editing it in App Store Connect does.
+            w = waiting[0]
+            old_v = w['attributes'].get('versionString')
+            call('PATCH', f"/appStoreVersions/{w['id']}", {'data': {'type': 'appStoreVersions', 'id': w['id'],
+                'attributes': {'versionString': version}}})
+            print(f'Version {old_v} renamed {version}: it was never sent for review')
+            released = [x for x in every if x['id'] != w['id']]
+            w['attributes']['versionString'] = version
+            vs = [w]
+        else:
+            # An update: the new version, made the way App Store Connect's + does.
+            made = call('POST', '/appStoreVersions', {'data': {'type': 'appStoreVersions',
+                'attributes': {'platform': 'IOS', 'versionString': version},
+                'relationships': {'app': {'data': {'type': 'apps', 'id': app_id}}}}})['data']
+            print(f'Version {version}: made')
+            vs = [made]
     v = vs[0]
     if v['attributes'].get('appVersionState') not in EDITABLE and v['attributes'].get('appStoreState') not in EDITABLE:
         sys.exit(f"::error::Version {version} is {v['attributes'].get('appVersionState')}; it cannot be changed now.")
@@ -197,7 +211,7 @@ def main():
     attrs = {'description': block(doc, 'Full description'), 'keywords': block(doc, 'Keywords'),
              'promotionalText': block(doc, 'Promotional text'), 'supportUrl': f'{SITE}/support', 'marketingUrl': SITE}
     # What's new, for an update (the first version has none).
-    if f"**What's new in {version}**" in doc:
+    if released and f"**What's new in {version}**" in doc:
         attrs['whatsNew'] = block(doc, f"What's new in {version}")
     if loc:
         call('PATCH', f"/appStoreVersionLocalizations/{loc['id']}", {'data': {
