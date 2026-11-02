@@ -55,6 +55,8 @@
 <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
 <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+<symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></symbol>
+<symbol id="i-gplay" viewBox="0 0 24 24"><path fill="#00C3FF" d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l9.3-9.7Z"/><path fill="#00E676" d="M16.1 8.6 5.2 2.4c-.6-.3-1.2-.4-1.6-.1l9.3 9.7Z"/><path fill="#FF3D44" d="M3.6 21.7c.4.3 1 .2 1.6-.1l10.9-6.2-3.2-3.4Z"/><path fill="#FFD500" d="m16.1 15.4 3.6-2c1-.6 1-1.5 0-2.1l-3.6-2.1-3.2 2.8Z"/></symbol>
 </defs></svg>
 
 <header class="nav" id="nav">
@@ -79,9 +81,15 @@
       <h1 id="hero-h" class="rise">Run your dairy from your phone.</h1>
       <p class="lead rise">Tick every drop on the round, pack the right bottles, and send bills that add up.</p>
       <div class="hero__get rise">
-        <a class="btn btn--sky" href="/app/">Start your farm<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="btn btn--glass" href="/c">I'm a customer</a>
+      <div class="stores">
+        <a class="store" data-store="play" href="https://play.google.com/store/apps/details?id=co.skifi.dairee" target="_blank" rel="noopener" aria-label="Get it on Google Play"><svg aria-hidden="true"><use href="#i-gplay"/></svg><span class="store__txt"><small>GET IT ON</small><b>Google Play</b></span></a>
+        <a class="store" data-store="ios" href="#get" aria-label="Download on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span class="store__txt"><small>Download on the</small><b>App Store</b></span></a>
       </div>
+      </div>
+      <p class="hero__links rise">
+        <a class="hero__link" href="/app/">Open it in your browser<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="hero__link" href="/c">I'm a customer<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </p>
       <p class="hero__facts rise">
         <span><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>Any phone or computer</span>
         <span><svg class="ic" aria-hidden="true"><use href="#i-cloudoff"/></svg>Ticks keep with no signal</span>
@@ -390,11 +398,15 @@
       <span class="d3 d3--cdrop" aria-hidden="true"><img src="/assets/3d/drop.webp" alt="" width="279" height="301" loading="lazy" decoding="async"></span>
       <img class="cta__icon" src="/assets/brand/touch-180.png" alt="" width="88" height="88" loading="lazy">
       <h2>Your dairy, sorted.</h2>
-      <p>Sign in, name your farm, and add your first customers.</p>
-      <div class="cta__btns">
-        <a class="btn btn--sky" href="/app/">Start your farm<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        <a class="btn btn--glass" href="/c">I'm a customer</a>
+      <p>Get Dairee on your phone, name your farm, and add your first customers.</p>
+      <div class="stores">
+        <a class="store" data-store="play" href="https://play.google.com/store/apps/details?id=co.skifi.dairee" target="_blank" rel="noopener" aria-label="Get it on Google Play"><svg aria-hidden="true"><use href="#i-gplay"/></svg><span class="store__txt"><small>GET IT ON</small><b>Google Play</b></span></a>
+        <a class="store" data-store="ios" href="#get" aria-label="Download on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span class="store__txt"><small>Download on the</small><b>App Store</b></span></a>
       </div>
+      <p class="cta__links">
+        <a class="cta__link" href="/app/">Open it in your browser<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="cta__link" href="/c">I'm a customer<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </p>
     </div>
   </div>
 </section>
@@ -403,7 +415,7 @@
 <div class="getbar" id="getbar" aria-hidden="true">
   <img src="/assets/brand/icon-64.png" alt="" width="40" height="40">
   <p><b>Dairee</b><span>The dairy farm app</span></p>
-  <a class="btn btn--sky btn--sm" href="/app/" tabindex="-1">Open Dairee</a>
+  <a class="btn btn--sky btn--sm" href="#get" tabindex="-1">Get the app</a>
 </div>
 
 <footer class="foot">

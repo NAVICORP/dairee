@@ -3,6 +3,13 @@
    wall board counts up while it is on screen. */
 document.documentElement.classList.add("js");
 
+/* where the store buttons go. The App Store link goes in once Apple has
+   approved the app: https://apps.apple.com/app/id6828269207 */
+var STORE = {
+  play: "https://play.google.com/store/apps/details?id=co.skifi.dairee",
+  ios: ""
+};
+
 (function () {
   "use strict";
   var MEN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -63,7 +70,18 @@ document.documentElement.classList.add("js");
       el.textContent = DSH[d.getDay()] + " " + short(d) + ", " + slot;
     });
 
-    /* on phones a slim bar with "Open Dairee" shows once the hero is gone,
+    /* the store buttons take their links from STORE */
+    $$("[data-store]").forEach(function (a) {
+      var url = STORE[a.getAttribute("data-store")];
+      if (url) {
+        a.href = url; a.target = "_blank"; a.rel = "noopener";
+      } else {
+        a.removeAttribute("target");
+        a.addEventListener("click", function (e) { e.preventDefault(); });
+      }
+    });
+
+    /* on phones a slim bar with "Get the app" shows once the hero is gone,
        and steps aside when the last call is on screen */
     var bar = $("#getbar"), heroEl = $(".hero"), getEl = $("#get");
     if (bar && heroEl && getEl && "IntersectionObserver" in window) {
