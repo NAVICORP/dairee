@@ -69,7 +69,10 @@ class _PortalShellState extends State<PortalShell> {
       _Changes(home: h, onChanged: _load),
       _Settings(home: h),
     ];
+    // The footer floats over the pages as glass: they run underneath it.
     return Scaffold(
+      extendBody: true,
+      backgroundColor: K.paper,
       body: IndexedStack(index: tab, children: pages),
       bottomNavigationBar: KNavBar(
         items: const [

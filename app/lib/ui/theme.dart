@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'glass.dart';
+
 /// The Dairee blues, taken from the logo: its D blue and the lighter blue of
 /// the path, a deep navy for the big cards and buttons, and a bright sky blue
 /// for progress on navy, on soft white. Done is blue, paused is amber, missed
@@ -167,6 +169,13 @@ ThemeData daireeTheme() {
       contentTextStyle: m(14.5, FontWeight.w500, K.ink2),
     ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(color: K.blue),
+    // Header buttons (back, edit, share, the bell) are small circles of glass.
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        fixedSize: const WidgetStatePropertyAll(Size.square(40)),
+        backgroundBuilder: (context, states, child) => Glass(child: child ?? const SizedBox.shrink()),
+      ),
+    ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(color: K.deep, borderRadius: BorderRadius.circular(10)),
       textStyle: m(13, FontWeight.w600, Colors.white),

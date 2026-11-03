@@ -6,6 +6,7 @@ import '../../core/config.dart';
 import '../../core/farm.dart';
 import '../../core/format.dart';
 import '../../core/outbox.dart';
+import '../glass.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'shell.dart';
@@ -495,7 +496,7 @@ class _RoundViewState extends State<RoundView> {
             await _load();
           },
           child: ListView(
-            padding: pad ?? const EdgeInsets.fromLTRB(Sp.page, Sp.xs, Sp.page, 120),
+            padding: pad ?? EdgeInsets.fromLTRB(Sp.page, Sp.xs, Sp.page, 40 + MediaQuery.paddingOf(context).bottom),
             children: children,
           ),
         );
@@ -630,34 +631,45 @@ class _RoundViewState extends State<RoundView> {
         ]),
         const SizedBox(height: 12),
         // Which round is being worked. A twice-a-day customer is on each.
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(color: _C.grey100, borderRadius: BorderRadius.circular(12)),
-          child: Row(children: [
-            for (final (sl, icon) in const [('morning', Icons.wb_twilight_rounded), ('evening', Icons.bedtime_outlined)])
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    if (sl != slot) _go(day, sl);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: sl == slot ? K.surface : Colors.transparent,
-                      borderRadius: BorderRadius.circular(9),
-                      boxShadow: sl == slot ? const [BoxShadow(color: Color(0x14101828), blurRadius: 3, offset: Offset(0, 1))] : null,
-                    ),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(icon, size: 16, color: sl == slot ? K.blue : K.muted),
-                      const SizedBox(width: 6),
-                      Text('${slotName(sl)} round', style: _m(12, FontWeight.w700, sl == slot ? K.blue : K.muted)),
-                    ]),
-                  ),
+        // A frosted glass track; the chosen round is a drop of blue glass
+        // that slides across with a small overshoot.
+        Glass(
+          padding: const EdgeInsets.all(3),
+          child: SizedBox(
+            height: 38,
+            child: Stack(children: [
+              AnimatedAlign(
+                alignment: slot == 'morning' ? Alignment.centerLeft : Alignment.centerRight,
+                duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 380),
+                curve: Curves.easeOutBack,
+                child: const FractionallySizedBox(
+                  widthFactor: 0.5,
+                  heightFactor: 1,
+                  child: IgnorePointer(child: Glass(tone: GlassTone.blue, shadow: false, child: SizedBox.expand())),
                 ),
               ),
-          ]),
+              Row(children: [
+                for (final (sl, icon) in const [('morning', Icons.wb_twilight_rounded), ('evening', Icons.bedtime_outlined)])
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      selected: sl == slot,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          if (sl != slot) _go(day, sl);
+                        },
+                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(icon, size: 16, color: sl == slot ? Colors.white : K.ink2),
+                          const SizedBox(width: 6),
+                          Text('${slotName(sl)} round', style: _m(12, FontWeight.w700, sl == slot ? Colors.white : K.ink2)),
+                        ]),
+                      ),
+                    ),
+                  ),
+              ]),
+            ]),
+          ),
         ),
         const SizedBox(height: 12),
         // Open or closed, said in one line, and the button beside it.

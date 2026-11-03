@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/format.dart';
+import 'glass.dart';
 import 'theme.dart';
 
 enum KButtonKind { primary, secondary, ghost, danger, blue }
@@ -55,6 +56,14 @@ class KButton extends StatelessWidget {
         ),
       ],
     );
+    // The solid buttons catch the light like polished glass.
+    final rim = switch (kind) {
+      KButtonKind.primary || KButtonKind.blue => GlassTone.dark,
+      KButtonKind.secondary => GlassTone.light,
+      _ => null,
+    };
+    Widget face = Container(height: h, padding: EdgeInsets.symmetric(horizontal: small ? 14 : 18), child: child);
+    if (rim != null) face = GlassRim(tone: rim, child: face);
     return Opacity(
       opacity: enabled || busy ? 1 : 0.45,
       child: Material(
@@ -68,15 +77,15 @@ class KButton extends StatelessWidget {
                   onPressed!();
                 }
               : null,
-          child: Container(height: h, padding: EdgeInsets.symmetric(horizontal: small ? 14 : 18), child: child),
+          child: face,
         ),
       ),
     );
   }
 }
 
-/// The deep pill-shaped button that floats over a list, like New chit in
-/// Kuree.
+/// The pill-shaped button that floats over a list, like New chit in Kuree,
+/// as blue glass: the list shows through it, blurred, as it scrolls past.
 class KFab extends StatelessWidget {
   const KFab({super.key, required this.label, required this.icon, required this.onPressed});
   final String label;
@@ -84,17 +93,39 @@ class KFab extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => FloatingActionButton.extended(
-        onPressed: onPressed,
-        heroTag: label,
-        backgroundColor: K.deep,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        highlightElevation: 4,
-        shape: const StadiumBorder(),
-        icon: Icon(icon),
-        label: Text(label, style: T.button.copyWith(color: Colors.white)),
-      );
+  Widget build(BuildContext context) {
+    // Lifted clear of the floating glass footer: Flutter places a floating
+    // button by the phone's own inset only, so the footer's height is added.
+    final media = MediaQuery.of(context);
+    final lift = (media.padding.bottom - media.viewPadding.bottom).clamp(0.0, 400.0);
+    return Padding(
+      padding: EdgeInsets.only(bottom: lift),
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: GlassPress(
+          label: label,
+          onTap: onPressed,
+          depth: 0.94,
+          child: Glass(
+            tone: GlassTone.blue,
+            blur: 16,
+            child: SizedBox(
+              height: 54,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 22, 0),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(icon, color: Colors.white, size: 22),
+                  const SizedBox(width: 8),
+                  Text(label, style: T.button.copyWith(color: Colors.white)),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// A white card with a hairline border and a soft shadow.
@@ -227,8 +258,10 @@ class ProgressLine extends StatelessWidget {
   }
 }
 
-/// Choices in a rounded pill: Morning, Evening.
-class KSegmented<V> extends StatelessWidget {
+/// Choices in a rounded pill: Morning, Evening. The pills sit in a frosted
+/// glass track; the chosen one is a drop of blue glass that slides to the
+/// next pill with a small overshoot, like liquid.
+class KSegmented<V> extends StatefulWidget {
   const KSegmented({super.key, required this.items, required this.value, required this.onChanged, this.expand = false});
   final List<(V, String)> items;
   final V value;
@@ -236,35 +269,93 @@ class KSegmented<V> extends StatelessWidget {
   final bool expand;
 
   @override
+  State<KSegmented<V>> createState() => _KSegmentedState<V>();
+}
+
+class _KSegmentedState<V> extends State<KSegmented<V>> {
+  final _row = GlobalKey();
+  late List<GlobalKey> _keys = _make();
+  List<Rect>? _rects;
+
+  List<GlobalKey> _make() => [for (var i = 0; i < widget.items.length; i++) GlobalKey()];
+
+  @override
+  void didUpdateWidget(KSegmented<V> old) {
+    super.didUpdateWidget(old);
+    if (old.items.length != widget.items.length) {
+      _keys = _make();
+      _rects = null;
+    }
+  }
+
+  void _measure() {
+    if (!mounted) return;
+    final row = _row.currentContext?.findRenderObject() as RenderBox?;
+    if (row == null || !row.hasSize) return;
+    final rects = <Rect>[];
+    for (final k in _keys) {
+      final b = k.currentContext?.findRenderObject() as RenderBox?;
+      if (b == null || !b.hasSize) return;
+      rects.add(b.localToGlobal(Offset.zero, ancestor: row) & b.size);
+    }
+    final old = _rects;
+    if (old != null && old.length == rects.length && Iterable.generate(rects.length).every((i) => old[i] == rects[i])) return;
+    setState(() => _rects = rects);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    Widget item(V v, String label) => Semantics(
-          button: true,
-          selected: v == value,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onChanged(v);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              constraints: const BoxConstraints(minHeight: 40),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: v == value ? K.surface : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: v == value ? const [BoxShadow(color: Color(0x1A071C42), blurRadius: 6, offset: Offset(0, 2))] : null,
-              ),
-              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label.copyWith(color: v == value ? K.deep : K.muted)),
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    final at = widget.items.indexWhere((e) => e.$1 == widget.value);
+    final rects = _rects;
+    final drop = rects != null && at >= 0 && at < rects.length ? rects[at] : null;
+    final still = MediaQuery.disableAnimationsOf(context);
+    Widget item(int i) {
+      final (v, label) = widget.items[i];
+      final on = i == at;
+      return Semantics(
+        button: true,
+        selected: on,
+        child: GestureDetector(
+          key: _keys[i],
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (!on) HapticFeedback.selectionClick();
+            widget.onChanged(v);
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 38),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+            // Before the drop is placed (the very first frame), the chosen
+            // pill is coloured on its own.
+            decoration: drop == null && on ? const BoxDecoration(color: K.blue, borderRadius: BorderRadius.all(Radius.circular(999))) : null,
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: T.label.copyWith(color: on ? Colors.white : K.ink2),
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ),
-        );
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: K.surface2, borderRadius: BorderRadius.circular(999), border: Border.all(color: K.border)),
-      child: Row(mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min, children: [
-        for (final (v, label) in items) expand ? Expanded(child: item(v, label)) : item(v, label),
+        ),
+      );
+    }
+
+    return Glass(
+      padding: const EdgeInsets.all(3),
+      child: Stack(children: [
+        if (drop != null)
+          AnimatedPositioned(
+            duration: still ? Duration.zero : const Duration(milliseconds: 380),
+            curve: Curves.easeOutBack,
+            left: drop.left,
+            top: drop.top,
+            width: drop.width,
+            height: drop.height,
+            child: const IgnorePointer(child: Glass(tone: GlassTone.blue, shadow: false, child: SizedBox.expand())),
+          ),
+        Row(key: _row, mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min, children: [
+          for (var i = 0; i < widget.items.length; i++) widget.expand ? Expanded(child: item(i)) : item(i),
+        ]),
       ]),
     );
   }
@@ -286,13 +377,19 @@ class RoundIcon extends StatelessWidget {
     final tap = math.max(44.0, size);
     final circle = Opacity(
       opacity: onTap == null ? 0.3 : 1,
-      child: Material(
-        color: dark ? const Color(0x1AFFFFFF) : K.surface,
-        shape: CircleBorder(side: dark ? BorderSide.none : const BorderSide(color: K.border)),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(width: size, height: size, child: Icon(icon, size: size * 0.5, color: color ?? (dark ? K.heroText : K.ink))),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Glass(
+          tone: dark ? GlassTone.dark : GlassTone.light,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: Center(child: Icon(icon, size: size * 0.5, color: color ?? (dark ? K.heroText : K.ink))),
+            ),
+          ),
         ),
       ),
     );
@@ -662,7 +759,9 @@ Future<R?> showKSheet<R>(BuildContext context, {required String title, required 
     useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: K.paper,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    barrierColor: const Color(0x52071C42),
     builder: (ctx) {
       final media = MediaQuery.of(ctx);
       final pad = EdgeInsets.fromLTRB(Sp.xl, Sp.sm, Sp.xl, Sp.xxl + media.padding.bottom);
@@ -670,7 +769,14 @@ Future<R?> showKSheet<R>(BuildContext context, {required String title, required 
         padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: media.size.height * 0.92),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // Thick frosted glass: the page shows through, softly, round the
+          // edges, and the text reads as clearly as on a page.
+          child: Glass(
+            tone: GlassTone.sheet,
+            blur: 30,
+            shadow: false,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             const SizedBox(height: 10),
             Center(child: Container(width: 38, height: 5, decoration: BoxDecoration(color: K.border2, borderRadius: BorderRadius.circular(5)))),
             Padding(
@@ -682,6 +788,7 @@ Future<R?> showKSheet<R>(BuildContext context, {required String title, required 
             ),
             Flexible(child: scroll ? SingleChildScrollView(padding: pad, child: builder(ctx)) : Padding(padding: pad, child: builder(ctx))),
           ]),
+          ),
         ),
       );
     },
@@ -1056,7 +1163,8 @@ class KNavItem {
   final String label;
 }
 
-/// The footer with the main pages: the chosen one sits in a soft blue pill.
+/// The footer with the main pages: a capsule of glass floating over the
+/// page, the chosen page in an ice-blue drop that slides to the next tab.
 class KNavBar extends StatelessWidget {
   const KNavBar({super.key, required this.items, required this.index, required this.onTap});
   final List<KNavItem> items;
@@ -1065,53 +1173,96 @@ class KNavBar extends StatelessWidget {
 
   static const double _bar = 64;
 
-  /// How much of the screen the footer takes above the phone's own bottom
-  /// inset: the bar and the line along its top.
-  static const double height = _bar + 1;
+  /// How tall the glass capsule is (the bar floats above the phone's own
+  /// bottom inset with a little air around it).
+  static const double height = _bar;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(color: K.surface, border: Border(top: BorderSide(color: K.border))),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: _bar,
-          child: Row(children: [
-            for (var i = 0; i < items.length; i++)
-              Expanded(
-                child: Semantics(
-                  button: true,
-                  selected: i == index,
-                  label: items[i].label,
-                  child: InkWell(
-                    onTap: () {
-                      if (i != index) HapticFeedback.selectionClick();
-                      onTap(i);
+    final off = glassOff(context);
+    final inset = MediaQuery.paddingOf(context).bottom;
+    final still = MediaQuery.disableAnimationsOf(context);
+    // The page slides under the floating bar and fades softly into the page
+    // colour at the very bottom, so the bar never sits on a hard edge.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [K.paper.withValues(alpha: 0), K.paper.withValues(alpha: off ? 1 : 0.55)],
+          stops: const [0, 0.8],
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(14, 12, 14, math.max(inset, 12.0)),
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Glass(
+              blur: 22,
+              child: SizedBox(
+                height: _bar,
+                child: LayoutBuilder(builder: (context, box) {
+                  final slot = box.maxWidth / items.length;
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween<double>(end: index.toDouble()),
+                    duration: still ? Duration.zero : const Duration(milliseconds: 460),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, p, _) {
+                      // The chosen tab is a drop of glass that stretches as it
+                      // travels to the next tab and settles back into shape.
+                      final travel = math.min(1.0, (index - p).abs());
+                      final w = (slot - 8) * (1 + 0.42 * travel);
+                      final h = (_bar - 10) * (1 - 0.16 * travel);
+                      return Stack(children: [
+                        Positioned(
+                          left: p * slot + (slot - w) / 2,
+                          top: (_bar - h) / 2,
+                          width: w,
+                          height: h,
+                          child: const IgnorePointer(child: Glass(tone: GlassTone.ice, shadow: false, child: SizedBox.expand())),
+                        ),
+                        Row(children: [
+                          for (var i = 0; i < items.length; i++)
+                            Expanded(
+                              child: Semantics(
+                                button: true,
+                                selected: i == index,
+                                label: items[i].label,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    if (i != index) HapticFeedback.selectionClick();
+                                    onTap(i);
+                                  },
+                                  child: ExcludeSemantics(
+                                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                      Icon(i == index ? items[i].iconOn : items[i].icon, size: 22, color: i == index ? K.brand600 : K.ink2),
+                                      const SizedBox(height: 3),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                                        child: Text(items[i].label,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: T.tiny.copyWith(
+                                                fontSize: 11.5,
+                                                color: i == index ? K.ink : K.ink2,
+                                                fontWeight: i == index ? FontWeight.w800 : FontWeight.w600)),
+                                      ),
+                                    ]),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ]),
+                      ]);
                     },
-                    child: ExcludeSemantics(
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 56,
-                          height: 30,
-                          decoration: BoxDecoration(color: i == index ? K.brand100 : Colors.transparent, borderRadius: BorderRadius.circular(999)),
-                          child: Icon(i == index ? items[i].iconOn : items[i].icon, size: 22, color: i == index ? K.brand600 : K.muted),
-                        ),
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(items[i].label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: T.tiny.copyWith(fontSize: 12, color: i == index ? K.ink : K.muted, fontWeight: i == index ? FontWeight.w700 : FontWeight.w600)),
-                        ),
-                      ]),
-                    ),
-                  ),
-                ),
+                  );
+                }),
               ),
-          ]),
+            ),
+          ),
         ),
       ),
     );
@@ -1153,7 +1304,7 @@ class PageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final list = ListView(
-      padding: EdgeInsets.fromLTRB(Sp.page, Sp.sm, Sp.page, bottom),
+      padding: EdgeInsets.fromLTRB(Sp.page, Sp.sm, Sp.page, bottom + MediaQuery.paddingOf(context).bottom),
       children: [
         Center(
           child: ConstrainedBox(

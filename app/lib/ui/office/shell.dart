@@ -5,6 +5,7 @@ import '../../core/api.dart';
 import '../../core/config.dart';
 import '../../core/farm.dart';
 import '../../core/format.dart';
+import '../glass.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'changes.dart';
@@ -167,15 +168,37 @@ class _FarmShellState extends State<FarmShell> {
       const KNavItem(Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
     ];
     if (wide) {
+      // A glass side bar over soft light, and the page as a rounded panel
+      // beside it, like a desktop app in the new design.
       return Scaffold(
-        body: Row(children: [
-          _SideBar(farm: farm, items: navItems, index: index, onTap: (i) => _select(items[i])),
-          const VerticalDivider(width: 1),
-          Expanded(child: pop),
-        ]),
+        body: AmbientLight(
+          child: SafeArea(
+            child: Row(children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
+                child: _SideBar(farm: farm, items: navItems, index: index, onTap: (i) => _select(items[i])),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(26)),
+                      boxShadow: [BoxShadow(color: Color(0x14071C42), blurRadius: 30, offset: Offset(0, 10))],
+                    ),
+                    child: ClipRRect(borderRadius: const BorderRadius.all(Radius.circular(26)), child: pop),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ),
       );
     }
+    // The footer floats over the pages as glass: they run underneath it.
     return Scaffold(
+      extendBody: true,
+      backgroundColor: K.paper,
       body: pop,
       bottomNavigationBar: KNavBar(items: navItems, index: index, onTap: (i) => _select(items[i])),
     );
@@ -189,13 +212,16 @@ class _SideBar extends StatelessWidget {
   final int index;
   final ValueChanged<int> onTap;
 
+  /// The chosen page sits in an ice-blue drop of glass; the others are bare.
+  Widget _chosen(bool on, Widget child) => on ? Glass(tone: GlassTone.ice, shadow: false, child: child) : child;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 240,
-      color: K.surface,
-      child: SafeArea(
-        right: false,
+      child: Glass(
+        radius: 26,
+        blur: 24,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 14, 6),
@@ -214,19 +240,21 @@ class _SideBar extends StatelessWidget {
               for (var i = 0; i < items.length; i++)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 2),
-                  child: Material(
-                    color: i == index ? K.brand100 : Colors.transparent,
-                    borderRadius: BorderRadius.circular(999),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(999),
-                      onTap: () => onTap(i),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                        child: Row(children: [
-                          Icon(i == index ? items[i].iconOn : items[i].icon, size: 21, color: i == index ? K.brand600 : K.muted),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(items[i].label, style: T.bodyStrong.copyWith(color: i == index ? K.ink : K.ink2))),
-                        ]),
+                  child: _chosen(
+                    i == index,
+                    Material(
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        customBorder: const StadiumBorder(),
+                        onTap: () => onTap(i),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          child: Row(children: [
+                            Icon(i == index ? items[i].iconOn : items[i].icon, size: 21, color: i == index ? K.brand600 : K.muted),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(items[i].label, style: T.bodyStrong.copyWith(color: i == index ? K.ink : K.ink2))),
+                          ]),
+                        ),
                       ),
                     ),
                   ),
