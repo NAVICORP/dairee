@@ -637,7 +637,7 @@ class _RoundViewState extends State<RoundView> {
           padding: const EdgeInsets.all(3),
           child: SizedBox(
             height: 38,
-            child: Stack(children: [
+            child: Stack(fit: StackFit.expand, children: [
               AnimatedAlign(
                 alignment: slot == 'morning' ? Alignment.centerLeft : Alignment.centerRight,
                 duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 380),

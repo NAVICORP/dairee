@@ -96,8 +96,10 @@ class KFab extends StatelessWidget {
   Widget build(BuildContext context) {
     // Lifted clear of the floating glass footer: Flutter places a floating
     // button by the phone's own inset only, so the footer's height is added.
-    final media = MediaQuery.of(context);
-    final lift = (media.padding.bottom - media.viewPadding.bottom).clamp(0.0, 400.0);
+    // The Scaffold takes the padding away inside its button slot, so the
+    // footer's height is read from what the Scaffold itself was given.
+    final outer = Scaffold.maybeOf(context)?.context.getInheritedWidgetOfExactType<MediaQuery>()?.data ?? MediaQuery.of(context);
+    final lift = (outer.padding.bottom - outer.viewPadding.bottom).clamp(0.0, 400.0);
     return Padding(
       padding: EdgeInsets.only(bottom: lift),
       child: Tooltip(
