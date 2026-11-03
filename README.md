@@ -25,6 +25,7 @@ One Flutter app for Android, iPhone and the web (dairee.skifi.co/app), on SkiFi'
 - **Money** has one answer for what is owed, the `bill_balances` view. Credit is kept by the database (`recompute_customer_credit`), never added up by the app. Settings > Check the money compares every total.
 - **Customers** sign in to the portal with their mobile number and a password the farm gives them (first four letters of the name and four random digits, changed on first sign-in; eight wrong tries lock the number for 15 minutes). The portal is database functions only, with its own session tokens.
 - **Offline**: delivery ticks wait in an outbox on the phone and go when the signal comes back.
+- **The look** is liquid glass, as in Pursee. In the app it is `lib/ui/glass.dart` (Glass, GlassPress, AmbientLight), used by the floating tab bar, side bar, buttons, switches and sheets. On the site it is the `.lg` classes in `web/assets/home.css` and `site.css`. Both fall back to plain panes when the phone asks for more contrast or less transparency.
 
 ## Checks
 
