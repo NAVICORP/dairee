@@ -12,7 +12,7 @@
   --sec:120px; /* the space between sections: 120 on desktop, 96 on tablets, 72 on phones */
 }
 *,*::before,*::after{box-sizing:border-box;letter-spacing:0}
-html{scroll-behavior:smooth;scroll-padding-top:84px;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;scroll-padding-top:96px;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fb);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;overflow-x:clip}
 img{display:block;max-width:100%}
 a{color:inherit}
@@ -26,38 +26,120 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 ::selection{background:var(--ice2);color:var(--deep)}
 :focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:12px}
 /* light blue on the navy cards, blue on the light page, so the focus ring always shows */
-.hero :focus-visible,.wall :focus-visible,.cta :focus-visible,.card--big :focus-visible,.getbar :focus-visible{outline-color:var(--glow)}
+.hero :focus-visible,.wall :focus-visible,.cta :focus-visible,.card--big :focus-visible,.is-dark :focus-visible{outline-color:var(--glow)}
+
+/* ------------------------------------------------------------ liquid glass
+   As in Pursee and Apple's 2025 design: glass only for the layer that floats
+   over content (the bar at the top, buttons and pills, the cards round the
+   hero phone, the phones' own bars, the "Get the app" bar). Never for
+   reading. One glass surface is:
+   - a translucent fill over a blurred, more saturated copy of what is behind
+   - a 1px rim that catches the light at the top left (::before, a gradient
+     border cut out with a mask)
+   - a sheen along the top edge (the first background layer)
+   - a soft shadow under it
+   Each surface only sets the --lg- values. The fallbacks at the end of this
+   file swap in solid fills when blur is missing or less transparency is asked
+   for. .lg--flat is the same look without the blur, for glass that sits on a
+   plain surface (inside the phone and TV pictures), where a blur would show
+   nothing and only cost time. */
+.lg{
+  --lg-fill:rgba(255,255,255,.54);--lg-solid:#fff;
+  --lg-rim:rgba(255,255,255,.95);--lg-rim2:rgba(255,255,255,.28);
+  --lg-spec:rgba(255,255,255,.5);
+  --lg-shadow:0 12px 32px -14px rgba(7,28,66,.3),0 2px 8px -3px rgba(7,28,66,.12);
+  position:relative;isolation:isolate;
+  background:linear-gradient(180deg,var(--lg-spec),rgba(255,255,255,0) 52%),var(--lg-fill);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.35),var(--lg-shadow)}
+.lg::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(135deg,var(--lg-rim) 0%,rgba(255,255,255,.12) 34%,rgba(255,255,255,0) 58%,var(--lg-rim2) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.lg--flat{-webkit-backdrop-filter:none;backdrop-filter:none}
+/* on the navy panels: a clear pane that lets the blue through */
+.lg--dark{--lg-fill:rgba(255,255,255,.1);--lg-solid:#0D2A5E;--lg-rim:rgba(255,255,255,.62);--lg-rim2:rgba(255,255,255,.16);--lg-spec:rgba(255,255,255,.13);
+  --lg-shadow:0 16px 34px -18px rgba(2,8,22,.75)}
+/* the refraction: Chromium only (home.js adds .lg-warp), a light ripple in
+   what is behind; everywhere else the plain blur above stays */
+.lg-warp .lg--warp{-webkit-backdrop-filter:blur(20px) url(#lgWarp) saturate(180%);backdrop-filter:blur(20px) url(#lgWarp) saturate(180%)}
+
+/* what can be pressed: a little bigger under the pointer, a little smaller
+   when pressed, and a soft light that follows the pointer (home.js sets
+   --sx and --sy). Transform and opacity only. */
+.lg-press{overflow:hidden;transition:transform .3s var(--ease)}
+.lg-press::after{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,255,255,.5),rgba(255,255,255,.16) 48%,rgba(255,255,255,0));
+  opacity:0;transform:translate(var(--sx,0px),var(--sy,0px));transition:opacity .35s}
+@media (hover:hover){
+  .lg-press:hover{transform:scale(1.02)}
+  .lg-press:hover::after{opacity:1}
+}
+.lg-press:active{transform:scale(.98)}
+.lg-press:active::after,.lg-press:focus-visible::after{opacity:1}
+
+/* soft light behind the glass: blurred blues, sky, ice and a little warm
+   amber and coral, drifting slowly. Decoration only. */
+.amb{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;border-radius:inherit}
+.amb i{position:absolute;display:block;width:var(--s,420px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(closest-side,rgb(var(--c) / var(--a,.5)),rgb(var(--c) / calc(var(--a,.5) * .42)) 52%,rgb(var(--c) / 0));
+  animation:drift var(--t,26s) ease-in-out var(--d,0s) infinite alternate}
+.amb.is-off i{animation-play-state:paused}
+@keyframes drift{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(var(--dx,7%),var(--dy,-6%),0) scale(1.08)}
+  100%{transform:translate3d(calc(var(--dx,7%) * -.6),calc(var(--dy,-6%) * -.8),0) scale(.95)}}
+.b-blue{--c:16 100 217}
+.b-deep{--c:30 84 190}
+.b-sky{--c:72 149 238}
+.b-ice{--c:150 200 255}
+.b-amber{--c:255 178 104}
+.b-coral{--c:255 122 140}
+.b-teal{--c:56 196 214}
 
 /* ------------------------------------------------------------ buttons, pills */
+/* buttons are tinted glass: the colour of the button, a little see-through */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 24px;border-radius:999px;border:0;
-  font-family:var(--fb);font-size:16.5px;font-weight:800;text-decoration:none;white-space:nowrap;
-  transition:transform .25s var(--ease),background-color .25s,box-shadow .25s}
-.btn:hover{transform:translateY(-2px)}
-.btn:active{transform:translateY(0) scale(.98)}
-.btn--sky{background:var(--glow);color:var(--deep);box-shadow:0 14px 30px -14px rgba(125,196,255,.8)}
-.btn--sky:hover{box-shadow:0 18px 36px -14px rgba(125,196,255,.95)}
-.btn--glass{background:rgba(255,255,255,.09);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
-.btn--glass:hover{background:rgba(255,255,255,.15)}
-.btn--ink{background:var(--deep);color:#fff;box-shadow:0 12px 26px -14px rgba(7,28,66,.7)}
-.btn--ink:hover{background:var(--deep2)}
+  font-family:var(--fb);font-size:16.5px;font-weight:800;text-decoration:none;white-space:nowrap}
+.btn--sky{--lg-fill:rgba(125,196,255,.86);--lg-solid:var(--glow);--lg-rim:rgba(255,255,255,.95);--lg-rim2:rgba(255,255,255,.4);--lg-spec:rgba(255,255,255,.42);
+  --lg-shadow:0 14px 30px -14px rgba(125,196,255,.8);color:var(--deep)}
+.btn--glass{--lg-fill:rgba(255,255,255,.1);--lg-solid:#0D2A5E;--lg-rim:rgba(255,255,255,.62);--lg-rim2:rgba(255,255,255,.16);--lg-spec:rgba(255,255,255,.13);color:#fff}
+.btn--ink{--lg-fill:rgba(7,28,66,.84);--lg-solid:var(--deep);--lg-rim:rgba(255,255,255,.55);--lg-rim2:rgba(255,255,255,.12);--lg-spec:rgba(255,255,255,.17);
+  --lg-shadow:0 12px 26px -14px rgba(7,28,66,.7);color:#fff}
 .btn--sm{height:44px;padding:0 18px;font-size:14.5px}
 .btn .ic{width:19px;height:19px}
 
 .pill{display:inline-flex;align-items:center;gap:9px;padding:8px 15px;border-radius:999px;font-size:14px;font-weight:700;width:max-content;max-width:100%}
-.pill--glass{background:rgba(255,255,255,.08);color:var(--ice);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.pill--glass{color:var(--ice)}
 .pill .ic{width:17px;height:17px;color:var(--glow)}
 .kicker{color:var(--blue);font-weight:800;font-size:15px}
 
 /* ------------------------------------------------------------ nav */
-.nav{position:sticky;top:0;z-index:50;background:rgba(247,249,252,.8);-webkit-backdrop-filter:saturate(1.6) blur(16px);backdrop-filter:saturate(1.6) blur(16px);transition:box-shadow .3s}
-.nav.is-stuck{box-shadow:0 1px 0 var(--line),0 10px 30px -22px rgba(7,28,66,.35)}
-.nav__in{max-width:1200px;margin:0 auto;padding:0 24px;height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--fh);font-weight:700;font-size:23px;color:var(--ink)}
+/* a glass capsule that stays at the top. It turns to dark glass while a navy
+   panel is under it (home.js), as Apple's glass does over dark content. */
+.nav{position:sticky;top:0;z-index:50;padding:12px 12px 10px;pointer-events:none}
+.nav__in{pointer-events:auto;max-width:1180px;margin:0 auto;padding:0 10px 0 14px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-radius:999px;
+  --lg-fill:rgba(255,255,255,.6);--lg-spec:rgba(255,255,255,.55);
+  --lg-shadow:0 14px 34px -16px rgba(7,28,66,.34),0 2px 8px -4px rgba(7,28,66,.12);
+  transition:background-color .35s,box-shadow .35s}
+.nav.is-stuck .nav__in{--lg-shadow:0 18px 40px -16px rgba(7,28,66,.4),0 2px 8px -4px rgba(7,28,66,.14)}
+.nav__in.is-dark{--lg-fill:rgba(7,28,66,.56);--lg-solid:#0D2A5E;--lg-rim:rgba(255,255,255,.6);--lg-rim2:rgba(255,255,255,.16);--lg-spec:rgba(255,255,255,.13);
+  --lg-shadow:0 18px 40px -18px rgba(2,8,22,.7)}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--fh);font-weight:700;font-size:23px;color:var(--ink);transition:color .35s}
 .brand img{width:34px;height:34px;border-radius:10px;box-shadow:0 0 0 1px var(--line),0 6px 14px -8px rgba(7,28,66,.5)}
 .nav__links{display:flex;gap:6px}
-.nav__links a{padding:9px 14px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;color:var(--muted);transition:background-color .2s,color .2s}
-.nav__links a:hover{background:rgba(13,27,51,.05);color:var(--ink)}
-@media (max-width:860px){.nav__links{display:none}.nav__in{height:64px}}
+.nav__links a{position:relative;isolation:isolate;padding:9px 14px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;color:#36445E;transition:color .2s,transform .3s var(--ease)}
+/* the light that comes up under a link: a smaller pane inside the bar */
+.nav__links a::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.4));box-shadow:inset 0 1px 0 #fff,0 6px 14px -8px rgba(7,28,66,.3)}
+.nav__links a:hover{color:var(--ink)}
+.nav__links a:hover::before{opacity:1}
+.nav__in.is-dark .brand,.nav__in.is-dark .nav__links a:hover{color:#fff}
+.nav__in.is-dark .nav__links a{color:rgba(228,238,252,.78)}
+.nav__in.is-dark .nav__links a::before{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.nav__in.is-dark .btn--ink{--lg-fill:rgba(125,196,255,.9);--lg-solid:var(--glow);--lg-rim:rgba(255,255,255,.95);--lg-rim2:rgba(255,255,255,.4);--lg-spec:rgba(255,255,255,.42);
+  --lg-shadow:0 10px 24px -12px rgba(125,196,255,.6);color:var(--deep)}
+@media (max-width:860px){.nav__links{display:none}}
 
 /* ------------------------------------------------------------ hero */
 .hero{position:relative;margin:0 12px;border-radius:40px;overflow:hidden;isolation:isolate;color:#fff;
@@ -75,12 +157,11 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 .hero h1{font-size:clamp(50px,6.6vw,94px);line-height:.97;max-width:10.5ch}
 .lead{font-size:20px;line-height:1.55;color:rgba(228,238,252,.86);max-width:34ch;text-wrap:balance}
 .hero__get{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
-/* the store buttons, as on kureeapp.com */
+/* the store buttons, as on kureeapp.com, in smoked glass */
 .stores{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.store{display:inline-flex;align-items:center;justify-content:center;gap:11px;width:196px;height:58px;padding:0 16px 0 14px;border-radius:14px;background:#000;color:#fff;text-decoration:none;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 16px 30px -18px rgba(0,0,0,.8);transition:transform .25s var(--ease),box-shadow .25s}
-a.store:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),0 20px 34px -18px rgba(0,0,0,.85)}
-a.store:active{transform:translateY(0) scale(.98)}
+.store{display:inline-flex;align-items:center;justify-content:center;gap:11px;width:196px;height:58px;padding:0 16px 0 14px;border-radius:14px;color:#fff;text-decoration:none;
+  --lg-fill:rgba(0,0,0,.44);--lg-solid:#000;--lg-rim:rgba(255,255,255,.62);--lg-rim2:rgba(255,255,255,.18);--lg-spec:rgba(255,255,255,.14);
+  --lg-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 16px 30px -18px rgba(0,0,0,.8)}
 .store svg{width:29px;height:29px;flex:none;stroke:none}
 .store[data-store="ios"] svg{width:38px;height:38px;margin:-5px -2px -2px -5px}
 .store__txt{display:grid;text-align:left;line-height:1}
@@ -130,14 +211,18 @@ a.store:active{transform:translateY(0) scale(.98)}
 .scr__bar{display:flex;align-items:center;justify-content:space-between;padding:.4em 2em 1.2em;flex:none}
 .scr__bar small{display:block;font-size:1.25em;font-weight:800;color:var(--blue)}
 .scr__bar b{display:block;font-family:var(--fh);font-size:1.75em;font-weight:700;line-height:1.15}
-.scr__icons{display:flex;gap:1.6em;color:var(--ink)}
+/* the screen's own controls are small glass, as in iOS 26 */
+.scr .lg{--lg-fill:rgba(255,255,255,.62);--lg-spec:rgba(255,255,255,.7);--lg-rim:#fff;--lg-rim2:rgba(255,255,255,.5);
+  --lg-shadow:0 0 0 1px rgba(7,28,66,.07),0 .5em 1.2em -.6em rgba(7,28,66,.3)}
+.scr .lg--dark{--lg-fill:rgba(255,255,255,.1);--lg-spec:rgba(255,255,255,.13);--lg-rim:rgba(255,255,255,.62);--lg-rim2:rgba(255,255,255,.16);--lg-shadow:0 .4em 1em -.5em rgba(2,8,22,.6)}
+.scr__icons{display:flex;gap:1.6em;padding:.75em .95em;border-radius:3em;color:var(--ink)}
 .scr__icons svg{width:2.3em;height:2.3em}
 .scr__hero{margin:0 1.6em;padding:1.6em 1.6em 1.5em;border-radius:2.4em;color:#fff;flex:none;
   background:radial-gradient(120% 120% at 85% 0%,#1C4C9C 0%,#0C2A63 45%,var(--deep) 100%);box-shadow:0 1.6em 3em -1.8em rgba(7,28,66,.7)}
 .scr__mrow{display:flex;align-items:center;justify-content:space-between;gap:.6em}
 .scr__mrow>span{display:inline-flex;align-items:center;gap:.35em;font-size:1.4em;font-weight:700;white-space:nowrap;color:#D3E3FB}
 .scr__mrow>span svg{width:1.15em;height:1.15em}
-.scr__cb{display:grid;place-items:center;width:3.6em;height:3.6em;border-radius:50%;background:rgba(255,255,255,.1);color:#D3E3FB}
+.scr__cb{display:grid;place-items:center;width:3.6em;height:3.6em;border-radius:50%;color:#D3E3FB}
 .scr__amt{font-family:var(--fh);font-size:3.7em;font-weight:700;line-height:1;margin-top:.45em;font-variant-numeric:tabular-nums}
 .scr__of{font-size:1.3em;color:rgba(211,227,251,.9);font-weight:600;margin-top:.35em}
 .scr__prog{height:.8em;border-radius:1em;background:rgba(255,255,255,.16);margin:1.4em 0 1em;overflow:hidden}
@@ -148,12 +233,20 @@ a.store:active{transform:translateY(0) scale(.98)}
 .scr__line{height:1px;background:rgba(255,255,255,.12);margin:1.2em 0}
 .scr__note{display:flex;align-items:flex-start;gap:.6em;font-size:1.25em;font-weight:500;color:#D3E3FB}
 .scr__note svg{width:1.2em;height:1.2em;flex:none;margin-top:.05em}
-.scr__seg{display:flex;gap:.2em;margin:1.3em 1.6em 0;padding:.35em;border-radius:3em;background:#EEF2F8;box-shadow:inset 0 0 0 1px var(--line);flex:none;width:max-content}
+.scr .scr__seg{display:flex;gap:.2em;margin:1.3em 1.6em 0;padding:.35em;border-radius:3em;flex:none;width:max-content;--lg-fill:rgba(226,234,246,.7);--lg-solid:#EEF2F8}
 .scr__seg span{padding:.65em 1.05em;border-radius:3em;font-size:1.2em;font-weight:700;color:var(--muted);white-space:nowrap}
-.scr__seg span.on{background:#fff;color:var(--deep);box-shadow:0 .2em .6em rgba(7,28,66,.1)}
+/* the chosen pill: a drop of blue glass, as in the app */
+.scr__seg span.on{color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 55%),linear-gradient(135deg,#468FF2,#1064D9 55%,#0B50B4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 .3em .7em -.2em rgba(11,80,180,.55)}
 .scr__seg b{font-weight:700}
 .scr__listwrap{margin:1.2em 1.6em 0;flex:1;min-height:0;overflow:hidden;
-  -webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+  -webkit-mask-image:linear-gradient(#000 64%,rgba(0,0,0,.5) 80%,rgba(0,0,0,.4) 90%,transparent);mask-image:linear-gradient(#000 64%,rgba(0,0,0,.5) 80%,rgba(0,0,0,.4) 90%,transparent)}
+/* the tab bar: a glass capsule floating over the list, as in the app */
+.scr .scr__nav{position:absolute;z-index:2;left:0;right:0;bottom:2.4em;margin:0 auto;width:max-content;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:.2em;padding:.5em;border-radius:4em;
+  --lg-fill:rgba(255,255,255,.5);--lg-spec:rgba(255,255,255,.6);--lg-shadow:0 0 0 1px rgba(7,28,66,.06),0 1em 2.4em -1em rgba(7,28,66,.4)}
+.scr__nav span{display:grid;justify-items:center;gap:.3em;padding:.5em 1.05em .45em;border-radius:3em;font-size:1.1em;font-weight:700;color:var(--muted);white-space:nowrap}
+.scr .scr__nav svg{width:2em;height:2em}
+.scr__nav span.on{color:var(--blue);background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.2)),rgba(196,218,248,.7);box-shadow:inset 0 1px 0 #fff}
 .scr__list{display:grid;gap:.9em;transition:transform .9s var(--ease)}
 .scr__grp{background:#fff;border-radius:2em;box-shadow:0 0 0 1px var(--line);overflow:hidden}
 .scr__gh{display:grid;grid-template-columns:3.6em 1fr auto;gap:1.1em;align-items:center;padding:1.1em 1.3em}
@@ -190,14 +283,19 @@ a.store:active{transform:translateY(0) scale(.98)}
 .tagp--amber{background:var(--amber);color:var(--amberInk)}
 
 /* the cards floating around the phone */
-.float{position:absolute;z-index:2;background:#fff;color:var(--ink);border-radius:22px;box-shadow:0 28px 60px -24px rgba(0,0,0,.55),0 0 0 1px rgba(13,27,51,.04);animation:float 8s ease-in-out infinite}
+/* light glass over the navy hero: the phone's edge, the 3D pieces and the
+   glow show through, frosted. The grey text is a shade darker than elsewhere
+   so it still reads on the frost. */
+.float{position:absolute;z-index:2;color:var(--ink);border-radius:22px;--muted:#3F4C66;
+  --lg-fill:rgba(232,241,255,.66);--lg-spec:rgba(255,255,255,.62);--lg-rim:#fff;--lg-rim2:rgba(255,255,255,.45);
+  --lg-shadow:inset 0 0 22px rgba(255,255,255,.3),0 28px 60px -24px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);animation:float 8s ease-in-out infinite}
 @keyframes float{0%,100%{translate:0 0}50%{translate:0 -12px}}
 .float--msg{left:calc(50% - 372px);top:52%;width:252px;padding:14px 14px 15px;animation-delay:-2s}
 .float__head{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--blue);margin-bottom:9px}
 .float__head .ic{width:16px;height:16px}
-.float__bubble{font-size:13.5px;line-height:1.45;background:var(--ice);padding:10px 12px;border-radius:16px 16px 16px 5px}
+.float__bubble{font-size:13.5px;line-height:1.45;background:rgba(255,255,255,.72);padding:10px 12px;border-radius:16px 16px 16px 5px;box-shadow:inset 0 1px 0 #fff}
 .float__btns{display:flex;gap:8px;margin-top:10px}
-.float__btns span{flex:1;display:grid;place-items:center;height:32px;border-radius:999px;font-size:13px;font-weight:800;box-shadow:inset 0 0 0 1.5px var(--line)}
+.float__btns span{flex:1;display:grid;place-items:center;height:32px;border-radius:999px;font-size:13px;font-weight:800;background:rgba(255,255,255,.55);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(7,28,66,.08)}
 .float__btns span:first-child{background:var(--deep);color:#fff;box-shadow:none}
 .float--pack{right:calc(50% - 340px);bottom:7%;width:244px;padding:16px;opacity:0;scale:.86;transition:opacity .5s,scale .6s var(--ease);animation-delay:-5s}
 .float--pack.show{opacity:1;scale:1}
@@ -206,7 +304,7 @@ a.store:active{transform:translateY(0) scale(.98)}
 .float--pack .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips u{text-decoration:none;font-size:12.5px;font-weight:800;color:#0B50B4;background:var(--ice);padding:4px 10px;border-radius:999px}
 .float--btl{right:calc(50% - 292px);top:24%;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 12px;animation-delay:-4s}
-.float__dot{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--ice);color:var(--blue);flex:none}
+.float__dot{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.7);box-shadow:inset 0 1px 0 #fff;color:var(--blue);flex:none}
 .float__dot .ic{width:19px;height:19px}
 .float--btl b{display:block;font-size:14.5px}
 .float--btl small{display:block;font-size:13px;color:var(--muted);font-weight:600}
@@ -214,7 +312,8 @@ a.store:active{transform:translateY(0) scale(.98)}
 /* ------------------------------------------------------------ sections */
 .sec{padding:var(--sec) 0}
 .sec--tight{padding:0 0 30px}
-.sec--ice{margin:0 12px;border-radius:40px;background:linear-gradient(180deg,#EDF3FD,var(--ice))}
+.sec--ice{position:relative;isolation:isolate;overflow:hidden;margin:0 12px;border-radius:40px;background:linear-gradient(180deg,#EDF3FD,var(--ice))}
+.card--big{isolation:isolate;overflow:hidden}
 .sec__head{text-align:center;display:grid;justify-items:center;gap:12px;margin-bottom:56px}
 .sec h2,.wall h2{font-size:clamp(38px,4.8vw,66px);line-height:1.02}
 .sec__head h2{max-width:15ch}
@@ -307,9 +406,8 @@ a.store:active{transform:translateY(0) scale(.98)}
 .wall h2{max-width:12ch}
 .ticks{display:grid;gap:14px;margin-top:4px}
 .ticks li{display:flex;align-items:center;gap:14px;font-weight:700;font-size:16.5px}
-.ticks i{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);flex:none}
+.ticks i{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;flex:none}
 .ticks .ic{color:var(--glow)}
-.ticks--dark i{background:#fff;box-shadow:0 0 0 1px var(--line)}
 .ticks--dark .ic{color:var(--blue)}
 .wall__ctl{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
 
@@ -367,16 +465,21 @@ a.store:active{transform:translateY(0) scale(.98)}
 .perm__row.flip .sw{animation:tickpop .55s var(--ease)}
 
 /* ------------------------------------------------------------ questions */
+#faq{position:relative;isolation:isolate}
 .faq{max-width:860px}
 .faq__list{display:grid;gap:12px}
 .faq details{border-radius:24px;background:#fff;box-shadow:0 0 0 1px var(--line);transition:box-shadow .3s}
 .faq details[open]{box-shadow:0 0 0 1px var(--line),0 24px 40px -34px rgba(7,28,66,.5)}
 .faq summary{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;font-weight:800;font-size:18px;cursor:pointer;list-style:none}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary i{position:relative;width:32px;height:32px;border-radius:50%;background:#EEF2F8;flex:none;transition:background-color .3s,transform .35s var(--ease)}
+.faq summary i{position:relative;width:32px;height:32px;border-radius:50%;flex:none;transition:background-color .3s,transform .35s var(--ease);
+  background-color:#E4EEFC;background-image:radial-gradient(90% 70% at 32% 8%,rgba(255,255,255,.95),rgba(255,255,255,0) 62%);
+  box-shadow:inset 1px 1px 0 #fff,inset -1px -1px 0 rgba(16,100,217,.14),inset 0 0 0 1px rgba(16,100,217,.1),0 5px 12px -6px rgba(11,80,180,.45)}
 .faq summary i::before,.faq summary i::after{content:"";position:absolute;left:50%;top:50%;width:13px;height:2.2px;margin:-1.1px 0 0 -6.5px;border-radius:2px;background:var(--ink);transition:transform .35s var(--ease),background-color .3s}
 .faq summary i::after{transform:rotate(90deg)}
-.faq details[open] summary i{background:var(--blue);transform:rotate(180deg)}
+.faq details[open] summary i{background-color:var(--blue);transform:rotate(180deg);
+  background-image:radial-gradient(90% 70% at 68% 92%,rgba(255,255,255,.5),rgba(255,255,255,0) 62%);
+  box-shadow:inset -1px -1px 0 rgba(255,255,255,.7),inset 1px 1px 0 rgba(255,255,255,.18),0 6px 14px -6px rgba(11,80,180,.7)}
 .faq details[open] summary i::before,.faq details[open] summary i::after{background:#fff}
 .faq details[open] summary i::after{transform:rotate(0)}
 .faq details p{padding:0 24px 22px;color:var(--muted);font-size:16.5px;max-width:62ch;text-wrap:pretty}
@@ -512,17 +615,25 @@ a.store:active{transform:translateY(0) scale(.98)}
   .foot nav{justify-content:center;gap:0;margin:0}
   .foot nav a{padding:12px 7px;font-size:14px}
 
-  /* the bar at the bottom with "Get the app" */
+  /* the bar at the bottom with "Get the app": glass, light over the light
+     page and dark over the navy panels (home.js) */
   .getbar{position:fixed;z-index:60;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:11px;
-    padding:9px 9px 9px 10px;border-radius:22px;background:rgba(7,28,66,.92);color:#fff;-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);
-    box-shadow:0 18px 40px -16px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.1);
-    transform:translateY(140%);opacity:0;transition:transform .45s var(--ease),opacity .3s}
+    padding:9px 9px 9px 10px;border-radius:24px;color:var(--ink);
+    --lg-fill:rgba(255,255,255,.6);--lg-spec:rgba(255,255,255,.6);--lg-shadow:0 18px 40px -16px rgba(7,28,66,.5),0 2px 8px -4px rgba(7,28,66,.16);
+    transform:translateY(140%);opacity:0;transition:transform .45s var(--ease),opacity .3s,background-color .35s,color .35s}
+  .getbar.is-dark{color:#fff;--lg-fill:rgba(7,28,66,.6);--lg-solid:#0D2A5E;--lg-rim:rgba(255,255,255,.6);--lg-rim2:rgba(255,255,255,.16);--lg-spec:rgba(255,255,255,.13);
+    --lg-shadow:0 18px 40px -16px rgba(0,0,0,.6)}
   .getbar.on{transform:none;opacity:1}
   .getbar img{width:40px;height:40px;border-radius:11px;flex:none}
   .getbar p{flex:1;min-width:0;display:grid;line-height:1.2}
   .getbar b{font-family:var(--fh);font-size:17px}
-  .getbar span{font-size:13px;color:rgba(228,238,252,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .getbar span{font-size:13px;color:#3F4C66;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .35s}
+  .getbar.is-dark span{color:rgba(228,238,252,.8)}
   .getbar .btn{flex:none}
+  html{scroll-padding-top:84px}
+  .nav{padding:8px 8px 8px}
+  .nav__in{height:56px;padding:0 8px 0 12px}
+  .nav .btn--sm{height:40px;padding:0 16px}
 }
 @media (max-width:370px){
   .bento__more .card{flex-basis:90%}
@@ -599,4 +710,59 @@ a.store:active{transform:translateY(0) scale(.98)}
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   .rise,.stage,.js .reveal{opacity:1;transform:none}
   .float--pack{opacity:1;scale:1}
+  /* glass stays still: no grow on hover, no shrink on press, the light stays put */
+  .lg-press:hover,.lg-press:active{transform:none}
+}
+
+/* where the light sits, section by section: always behind the glass */
+.amb--top{position:absolute;inset:0 0 auto;height:320px}
+.amb--top i:nth-child(1){--s:440px;--a:.4;left:2%;top:-190px;--t:30s}
+.amb--top i:nth-child(2){--s:420px;--a:.16;left:36%;top:-230px;--t:26s;--d:-8s}
+.amb--top i:nth-child(3){--s:380px;--a:.2;left:70%;top:-200px;--t:28s;--d:-14s}
+.amb--hero i:nth-child(1){--s:clamp(340px,44vw,640px);--a:.55;left:50%;top:-16%;--t:30s;--dx:-6%;--dy:8%}
+.amb--hero i:nth-child(2){--s:clamp(240px,26vw,380px);--a:.45;left:41%;top:42%;--t:24s;--d:-6s}
+.amb--hero i:nth-child(3){--s:clamp(200px,22vw,330px);--a:.4;left:73%;top:4%;--t:22s;--d:-3s;--dx:-8%;--dy:10%}
+.amb--hero i:nth-child(4){--s:clamp(200px,22vw,320px);--a:.2;left:76%;top:58%;--t:26s;--d:-9s;--dx:-6%;--dy:-8%}
+.amb--hero i:nth-child(5){--s:clamp(300px,34vw,480px);--a:.36;left:-6%;top:46%;--t:28s;--d:-12s}
+.amb--card i:nth-child(1){--s:440px;--a:.22;left:44%;top:20%;--t:26s}
+.amb--card i:nth-child(2){--s:300px;--a:.16;left:72%;top:58%;--t:24s;--d:-7s}
+.amb--wall i:nth-child(1){--s:clamp(320px,36vw,520px);--a:.42;left:-8%;top:4%;--t:28s}
+.amb--wall i:nth-child(2){--s:clamp(200px,22vw,300px);--a:.2;left:14%;top:60%;--t:22s;--d:-5s;--dx:10%}
+.amb--wall i:nth-child(3){--s:clamp(300px,34vw,500px);--a:.3;left:56%;top:-12%;--t:30s;--d:-10s}
+.amb--wall i:nth-child(4){--s:clamp(220px,22vw,300px);--a:.14;left:82%;top:58%;--t:26s;--d:-14s}
+.amb--team i:nth-child(1){--s:clamp(320px,36vw,520px);--a:.24;left:58%;top:4%;--t:28s}
+.amb--team i:nth-child(2){--s:clamp(220px,24vw,340px);--a:.2;left:70%;top:54%;--t:24s;--d:-6s}
+.amb--team i:nth-child(3){--s:clamp(260px,28vw,400px);--a:.12;left:10%;top:44%;--t:26s;--d:-11s}
+.amb--faq i:nth-child(1){--s:420px;--a:.14;left:6%;top:18%;--t:28s}
+.amb--faq i:nth-child(2){--s:340px;--a:.1;left:70%;top:46%;--t:24s;--d:-9s}
+.amb--cta i:nth-child(1){--s:clamp(340px,40vw,560px);--a:.42;left:28%;top:-46%;--t:28s}
+.amb--cta i:nth-child(2){--s:clamp(200px,22vw,300px);--a:.2;left:22%;top:50%;--t:24s;--d:-6s;--dx:12%}
+.amb--cta i:nth-child(3){--s:clamp(200px,22vw,300px);--a:.14;left:56%;top:56%;--t:26s;--d:-12s;--dx:-12%}
+.amb--cta i:nth-child(4){--s:clamp(240px,26vw,380px);--a:.22;left:38%;top:58%;--t:22s;--d:-4s}
+@media (max-width:1080px){
+  .amb--hero i:nth-child(1){left:18%;top:40%}
+  .amb--hero i:nth-child(2){left:-12%;top:30%}
+  .amb--hero i:nth-child(3){left:58%;top:52%}
+  .amb--hero i:nth-child(4){left:0;top:72%;--a:.14}
+  .amb--hero i:nth-child(5){left:28%;top:16%}
+  .amb--wall i:nth-child(3){left:30%;top:46%}
+  .amb--wall i:nth-child(4){left:70%;top:80%}
+}
+@media (max-width:640px){
+  .amb--top i:nth-child(2){display:none}
+  .amb--team i:nth-child(1){left:20%;top:2%}
+  .amb--faq i:nth-child(1){left:-30%}
+  .amb--faq i:nth-child(2){left:40%}
+}
+
+/* ------------------------------------------------------------ glass fallbacks
+   No blur in this browser, or the reader asked for less transparency: every
+   glass surface becomes a solid one in its own colour, with its rim and
+   shadow kept. */
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  html .lg{background-color:var(--lg-solid)}
+}
+@media (prefers-reduced-transparency:reduce){
+  html .lg{background-color:var(--lg-solid);-webkit-backdrop-filter:none;backdrop-filter:none}
+  html.lg-warp .lg--warp{-webkit-backdrop-filter:none;backdrop-filter:none}
 }

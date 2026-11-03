@@ -46,6 +46,7 @@
 <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 16v-4M13 16V8M18 16v-7"/></symbol>
 <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/></symbol>
 <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+<symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
 <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
 <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
@@ -56,18 +57,21 @@
 <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
 <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></symbol>
 <symbol id="i-gplay" viewBox="0 0 24 24"><path fill="#00C3FF" d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l9.3-9.7Z"/><path fill="#00E676" d="M16.1 8.6 5.2 2.4c-.6-.3-1.2-.4-1.6-.1l9.3 9.7Z"/><path fill="#FF3D44" d="M3.6 21.7c.4.3 1 .2 1.6-.1l10.9-6.2-3.2-3.4Z"/><path fill="#FFD500" d="m16.1 15.4 3.6-2c1-.6 1-1.5 0-2.1l-3.6-2.1-3.2 2.8Z"/></symbol>
+<filter id="lgWarp" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.016" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G"/></filter>
 </defs></svg>
 
+<div class="amb amb--top" aria-hidden="true"><i class="b-sky"></i><i class="b-blue"></i><i class="b-amber"></i></div>
+
 <header class="nav" id="nav">
-  <div class="nav__in">
+  <div class="nav__in lg lg--warp" data-adapt>
     <a class="brand" href="/" aria-label="Dairee home"><img src="/assets/brand/icon-64.png" alt="" width="34" height="34"><span>Dairee</span></a>
     <nav class="nav__links" aria-label="Sections">
-      <a href="#features">Features</a>
-      <a href="#wall">Wall board</a>
-      <a href="#customers">Customers</a>
-      <a href="#faq">Questions</a>
+      <a class="lg-press" href="#features">Features</a>
+      <a class="lg-press" href="#wall">Wall board</a>
+      <a class="lg-press" href="#customers">Customers</a>
+      <a class="lg-press" href="#faq">Questions</a>
     </nav>
-    <a class="btn btn--ink btn--sm" href="/app/">Open Dairee</a>
+    <a class="btn btn--ink btn--sm lg lg--flat lg-press" href="/app/">Open Dairee</a>
   </div>
 </header>
 
@@ -75,14 +79,15 @@
 <!-- ============================================================ hero -->
 <section class="hero" aria-labelledby="hero-h">
   <div class="hero__glow" aria-hidden="true"></div>
+  <div class="amb amb--hero" aria-hidden="true"><i class="b-deep"></i><i class="b-sky"></i><i class="b-teal"></i><i class="b-amber"></i><i class="b-blue"></i></div>
   <div class="wrap hero__grid">
     <div class="hero__copy">
       <h1 id="hero-h" class="rise">Run your dairy from your phone.</h1>
       <p class="lead rise">Tick every drop on the round, pack the right bottles, and send bills that add up.</p>
       <div class="hero__get rise">
       <div class="stores">
-        <a class="store" data-store="play" href="https://play.google.com/store/apps/details?id=co.skifi.dairee" target="_blank" rel="noopener" aria-label="Get it on Google Play"><svg aria-hidden="true"><use href="#i-gplay"/></svg><span class="store__txt"><small>GET IT ON</small><b>Google Play</b></span></a>
-        <a class="store" data-store="ios" href="#get" aria-label="Download on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span class="store__txt"><small>Download on the</small><b>App Store</b></span></a>
+        <a class="store lg lg-press" data-store="play" href="https://play.google.com/store/apps/details?id=co.skifi.dairee" target="_blank" rel="noopener" aria-label="Get it on Google Play"><svg aria-hidden="true"><use href="#i-gplay"/></svg><span class="store__txt"><small>GET IT ON</small><b>Google Play</b></span></a>
+        <a class="store lg lg-press" data-store="ios" href="#get" aria-label="Download on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span class="store__txt"><small>Download on the</small><b>App Store</b></span></a>
       </div>
       </div>
       <p class="hero__facts rise">
@@ -98,13 +103,13 @@
             <div class="scr__top"></div>
             <div class="scr__bar">
               <div><small>Green Meadows Dairy</small><b>Morning round</b></div>
-              <div class="scr__icons"><svg><use href="#i-more"/></svg></div>
+              <div class="scr__icons lg lg--flat"><svg><use href="#i-more"/></svg></div>
             </div>
             <div class="scr__hero">
               <div class="scr__mrow">
-                <i class="scr__cb"><svg><use href="#i-prev"/></svg></i>
+                <i class="scr__cb lg lg--flat lg--dark"><svg><use href="#i-prev"/></svg></i>
                 <span><svg><use href="#i-sunrise"/></svg>Morning, today<svg><use href="#i-down"/></svg></span>
-                <i class="scr__cb"><svg><use href="#i-next"/></svg></i>
+                <i class="scr__cb lg lg--flat lg--dark"><svg><use href="#i-next"/></svg></i>
               </div>
               <div class="scr__amt" id="hAmt">15 L</div>
               <div class="scr__of">of 25.5 L delivered on <span data-today>28 Oct</span></div>
@@ -113,7 +118,7 @@
               <div class="scr__line"></div>
               <div class="scr__note"><svg><use href="#i-bottle"/></svg><span id="hNote">2 bottles to collect, 1 paused</span></div>
             </div>
-            <div class="scr__seg"><span class="on">All 14</span><span>To do <b id="hTodo">6</b></span><span>Done <b id="hDone2">7</b></span><span>Paused 1</span></div>
+            <div class="scr__seg lg lg--flat"><span class="on">All 14</span><span>To do <b id="hTodo">6</b></span><span>Done <b id="hDone2">7</b></span><span>Paused 1</span></div>
             <div class="scr__listwrap">
               <div class="scr__list" id="hList">
                 <div class="scr__grp" id="gLake">
@@ -132,6 +137,7 @@
                 </div>
               </div>
             </div>
+            <div class="scr__nav lg"><span class="on"><svg><use href="#i-sunrise"/></svg>Today</span><span><svg><use href="#i-users"/></svg>Customers</span><span><svg><use href="#i-wallet"/></svg>To collect</span><span><svg><use href="#i-person"/></svg>Profile</span></div>
           </div>
           <div class="sb"><b>6:41</b><span class="sb__sys"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg class="wifi" viewBox="0 0 16 12"><path d="M1.4 4.7a9.6 9.6 0 0 1 13.2 0M3.9 7.4a6 6 0 0 1 8.2 0M6.5 10.1a2.3 2.3 0 0 1 3 0" stroke-width="1.9" stroke-linecap="round"/></svg><svg class="bat" viewBox="0 0 27 13"><rect x=".6" y=".6" width="22.8" height="11.8" rx="3.4" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-width="1.2"/><rect x="2.4" y="2.4" width="19.2" height="8.2" rx="2"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2z" opacity=".45"/></svg></span></div><i class="island"></i><i class="hi"></i>
         </div>
@@ -142,16 +148,16 @@
       <span class="d3 d3--htick" data-depth="3" aria-hidden="true"><img src="/assets/3d/tick.webp" alt="" width="281" height="279" decoding="async"></span>
       <span class="d3 d3--hdrop" data-depth="2.6" aria-hidden="true"><img src="/assets/3d/drop.webp" alt="" width="279" height="301" decoding="async"></span>
 
-      <div class="float float--msg">
+      <div class="float float--msg lg lg--warp">
         <p class="float__head"><svg class="ic"><use href="#i-msg"/></svg>Request from Lakshmi Iyer</p>
         <p class="float__bubble">2 L on Friday evening instead of 1 L. Family visiting.</p>
         <p class="float__btns"><span>Yes</span><span>No</span></p>
       </div>
-      <div class="float float--btl">
+      <div class="float float--btl lg lg--warp">
         <i class="float__dot"><svg class="ic"><use href="#i-bottle"/></svg></i>
         <div><b>Bottles collected</b><small>Thomas Mathew, 3B</small></div>
       </div>
-      <div class="float float--pack" id="hPack">
+      <div class="float float--pack lg lg--warp" id="hPack">
         <small>Packing for tomorrow</small>
         <b>25.5 L</b>
         <p class="chips"><u>13 x 1 litre bottle</u><u>5 x 500 ml bottle</u><u>4 x 2 litre can</u></p>
@@ -172,6 +178,7 @@
 
     <div class="bento">
       <article class="card card--big reveal">
+        <div class="amb amb--card" aria-hidden="true"><i class="b-sky"></i><i class="b-teal"></i></div>
         <div class="card__copy">
           <h3>Tick every door.</h3>
           <p>The round by building, with how much each house takes and in what. Litres out and stops to go, worked out as you go.</p>
@@ -248,17 +255,18 @@
 
 <!-- ============================================================ the wall board -->
 <section class="wall" id="wall" aria-labelledby="w-h">
+  <div class="amb amb--wall" aria-hidden="true"><i class="b-blue"></i><i class="b-amber"></i><i class="b-sky"></i><i class="b-teal"></i></div>
   <div class="wrap wall__grid">
     <div class="wall__copy reveal">
-      <p class="pill pill--glass"><svg class="ic" aria-hidden="true"><use href="#i-tv"/></svg>The wall board</p>
+      <p class="pill pill--glass lg lg--dark"><svg class="ic" aria-hidden="true"><use href="#i-tv"/></svg>The wall board</p>
       <h2 id="w-h">Put today on the office wall.</h2>
       <p class="lead">Both rounds, large, on any screen in the office. Everyone sees how far the round has got.</p>
       <ul class="ticks">
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></i>Updates by itself every half minute</li>
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-sunrise"/></svg></i>Morning and evening side by side</li>
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-box"/></svg></i>Tomorrow's packing underneath</li>
+        <li><i class="lg lg--flat lg--dark"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></i>Updates by itself every half minute</li>
+        <li><i class="lg lg--flat lg--dark"><svg class="ic" aria-hidden="true"><use href="#i-sunrise"/></svg></i>Morning and evening side by side</li>
+        <li><i class="lg lg--flat lg--dark"><svg class="ic" aria-hidden="true"><use href="#i-box"/></svg></i>Tomorrow's packing underneath</li>
       </ul>
-      <div class="wall__ctl"><a class="btn btn--sky" href="/app/">Start your farm</a></div>
+      <div class="wall__ctl"><a class="btn btn--sky lg lg-press" href="/app/">Start your farm</a></div>
     </div>
     <div class="tv reveal" aria-hidden="true">
       <span class="d3 d3--wclock" aria-hidden="true"><img src="/assets/3d/clock.webp" alt="" width="248" height="305" loading="lazy" decoding="async"></span>
@@ -293,9 +301,9 @@
             <div class="scr__bar"><div><small>Green Meadows Dairy</small><b>Lakshmi Iyer</b></div></div>
             <div class="scr__hero">
               <div class="scr__mrow">
-                <i class="scr__cb"><svg><use href="#i-prev"/></svg></i>
+                <i class="scr__cb lg lg--flat lg--dark"><svg><use href="#i-prev"/></svg></i>
                 <span><svg><use href="#i-cal"/></svg><span data-month>October 2026</span></span>
-                <i class="scr__cb"><svg><use href="#i-next"/></svg></i>
+                <i class="scr__cb lg lg--flat lg--dark"><svg><use href="#i-next"/></svg></i>
               </div>
               <div class="scr__amt">52 L</div>
               <div class="scr__of">delivered on 26 days, 2 days paused</div>
@@ -326,26 +334,27 @@
       <h2 id="c-h">Customers see their own milk.</h2>
       <p class="lead">Every delivery, every bill and what is left to pay, on their phone. No calls to ask.</p>
       <ul class="ticks ticks--dark">
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg></i>Pause a day, or ask for more</li>
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></i>One link to share with them</li>
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></i>Nothing to install</li>
+        <li><i class="lg lg--flat"><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg></i>Pause a day, or ask for more</li>
+        <li><i class="lg lg--flat"><svg class="ic" aria-hidden="true"><use href="#i-link"/></svg></i>One link to share with them</li>
+        <li><i class="lg lg--flat"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></i>Nothing to install</li>
       </ul>
-      <div class="split__cta"><a class="btn btn--ink" href="/c">I'm a customer</a></div>
+      <div class="split__cta"><a class="btn btn--ink lg lg-press" href="/c">I'm a customer</a></div>
     </div>
   </div>
 </section>
 
 <!-- ============================================================ staff -->
 <section class="sec sec--ice" id="team" aria-labelledby="t-h">
+  <div class="amb amb--team" aria-hidden="true"><i class="b-sky"></i><i class="b-amber"></i><i class="b-blue"></i></div>
   <div class="wrap split split--rev">
     <div class="split__copy reveal">
       <p class="kicker">For your team</p>
       <h2 id="t-h">Everyone sees their part.</h2>
       <p class="lead">Add staff by WhatsApp number or email. Turn each page on or off for each person.</p>
       <ul class="ticks ticks--dark">
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg></i>Delivery staff see just their stops</li>
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></i>Money stays with who you choose</li>
-        <li><i><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></i>Every change kept, and by whom</li>
+        <li><i class="lg lg--flat"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg></i>Delivery staff see just their stops</li>
+        <li><i class="lg lg--flat"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></i>Money stays with who you choose</li>
+        <li><i class="lg lg--flat"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></i>Every change kept, and by whom</li>
       </ul>
     </div>
     <div class="split__visual split__visual--deco reveal" aria-hidden="true">
@@ -366,6 +375,7 @@
 
 <!-- ============================================================ questions -->
 <section class="sec" id="faq" aria-labelledby="q-h">
+  <div class="amb amb--faq" aria-hidden="true"><i class="b-sky"></i><i class="b-amber"></i></div>
   <div class="wrap faq">
     <div class="sec__head reveal">
       <p class="kicker">Questions</p>
@@ -387,6 +397,7 @@
   <div class="wrap">
     <div class="cta reveal">
       <div class="cta__glow" aria-hidden="true"></div>
+      <div class="amb amb--cta" aria-hidden="true"><i class="b-deep"></i><i class="b-teal"></i><i class="b-amber"></i><i class="b-sky"></i></div>
       <span class="d3 d3--ccow" aria-hidden="true"><img src="/assets/3d/cow.webp" alt="" width="284" height="299" loading="lazy" decoding="async"></span>
       <span class="d3 d3--glow d3--ctick" aria-hidden="true"><img src="/assets/3d/tick.webp" alt="" width="281" height="279" loading="lazy" decoding="async"></span>
       <span class="d3 d3--cbottle" aria-hidden="true"><img src="/assets/3d/bottle.webp" alt="" width="139" height="324" loading="lazy" decoding="async"></span>
@@ -395,18 +406,18 @@
       <h2>Your dairy, sorted.</h2>
       <p>Get Dairee on your phone, name your farm, and add your first customers.</p>
       <div class="stores">
-        <a class="store" data-store="play" href="https://play.google.com/store/apps/details?id=co.skifi.dairee" target="_blank" rel="noopener" aria-label="Get it on Google Play"><svg aria-hidden="true"><use href="#i-gplay"/></svg><span class="store__txt"><small>GET IT ON</small><b>Google Play</b></span></a>
-        <a class="store" data-store="ios" href="#get" aria-label="Download on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span class="store__txt"><small>Download on the</small><b>App Store</b></span></a>
+        <a class="store lg lg-press" data-store="play" href="https://play.google.com/store/apps/details?id=co.skifi.dairee" target="_blank" rel="noopener" aria-label="Get it on Google Play"><svg aria-hidden="true"><use href="#i-gplay"/></svg><span class="store__txt"><small>GET IT ON</small><b>Google Play</b></span></a>
+        <a class="store lg lg-press" data-store="ios" href="#get" aria-label="Download on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span class="store__txt"><small>Download on the</small><b>App Store</b></span></a>
       </div>
     </div>
   </div>
 </section>
 </main>
 
-<div class="getbar" id="getbar" aria-hidden="true">
+<div class="getbar lg lg--warp" id="getbar" data-adapt aria-hidden="true">
   <img src="/assets/brand/icon-64.png" alt="" width="40" height="40">
   <p><b>Dairee</b><span>The dairy farm app</span></p>
-  <a class="btn btn--sky btn--sm" href="#get" tabindex="-1">Get the app</a>
+  <a class="btn btn--sky btn--sm lg lg--flat lg-press" href="#get" tabindex="-1">Get the app</a>
 </div>
 
 <footer class="foot">

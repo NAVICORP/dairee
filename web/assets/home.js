@@ -96,11 +96,38 @@ var STORE = {
       new IntersectionObserver(function (es) { getIn = es[0].isIntersecting; upd(); }, { threshold: 0.1 }).observe(getEl);
     }
 
-    /* the bar at the top gets a line once the page moves */
-    var nav = $("#nav");
-    function onScroll() { nav.classList.toggle("is-stuck", window.scrollY > 8); }
+    /* The glass bars (the one at the top, the "Get the app" bar) turn to dark
+       glass while a navy panel is under them, as Apple's glass does: light
+       glass over the light page, dark glass over the navy. A panel counts
+       when it covers the middle of the bar and most of its width. Both looks
+       are tinted enough to read over anything that slides under them. */
+    var nav = $("#nav"), adapt = $$("[data-adapt]"), darks = $$(".hero, .wall, .cta, .card--big"), toneRaf = 0;
+    function tone() {
+      toneRaf = 0;
+      nav.classList.toggle("is-stuck", window.scrollY > 8);
+      adapt.forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (!r.width) return;
+        var cy = r.top + r.height / 2, dark = false;
+        for (var i = 0; i < darks.length && !dark; i++) {
+          var d = darks[i].getBoundingClientRect();
+          if (d.top <= cy && d.bottom >= cy && Math.min(r.right, d.right) - Math.max(r.left, d.left) >= r.width * 0.6) dark = true;
+        }
+        el.classList.toggle("is-dark", dark);
+      });
+    }
+    function onScroll() { if (!toneRaf) toneRaf = requestAnimationFrame(tone); }
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    window.addEventListener("resize", onScroll);
+    tone();
+
+    /* the soft light behind the glass only drifts while it is on screen */
+    if ("IntersectionObserver" in window) {
+      var ambIo = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { e.target.classList.toggle("is-off", !e.isIntersecting); });
+      }, { rootMargin: "120px 0px" });
+      $$(".amb").forEach(function (el) { ambIo.observe(el); });
+    }
 
     /* sections come in as they are scrolled to */
     var io = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
@@ -245,4 +272,34 @@ var STORE = {
   hero.addEventListener("pointerleave", function () {
     items.forEach(function (el) { el.style.transform = ""; });
   });
+})();
+
+/* Liquid glass. The refraction (an SVG filter used through backdrop-filter)
+   only works in Chromium, so it is switched on there alone; Safari and
+   Firefox keep the plain blur. And on buttons and pills, a soft light follows
+   the pointer: --sx and --sy place it, CSS only moves it (transform). */
+(function () {
+  var mm = function (q) { return window.matchMedia && matchMedia(q).matches; };
+  var brands = navigator.userAgentData && navigator.userAgentData.brands;
+  var chromium = !!(brands && brands.some(function (b) { return /Chromium/.test(b.brand); }));
+  if (chromium && window.CSS && CSS.supports("backdrop-filter", "blur(1px)") && !mm("(prefers-reduced-transparency: reduce)")) {
+    document.documentElement.classList.add("lg-warp");
+  }
+  if (mm("(prefers-reduced-motion: reduce)")) return;
+  var el = null, px = 0, py = 0, raf = 0;
+  function place() {
+    raf = 0;
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    el.style.setProperty("--sx", (px - r.left - r.width / 2).toFixed(1) + "px");
+    el.style.setProperty("--sy", (py - r.top - r.height / 2).toFixed(1) + "px");
+  }
+  function track(e) {
+    var t = e.target && e.target.closest ? e.target.closest(".lg-press") : null;
+    if (!t) return;
+    el = t; px = e.clientX; py = e.clientY;
+    if (!raf) raf = requestAnimationFrame(place);
+  }
+  document.addEventListener("pointermove", track, { passive: true });
+  document.addEventListener("pointerdown", track, { passive: true });
 })();
