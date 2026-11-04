@@ -102,6 +102,12 @@ The first release of Dairee: the milk round, packing, pauses, bills and payments
 A new delivery screen. Pick the day and the morning or evening round, see how far the round has got, and work through every building: tick each door, take back the bottle, and see the bottles still out from earlier days. Filter by building, delivery person or quantity, and report a problem at any door.
 ```
 
+**What's new in 1.0.2** (Google Play; on the App Store the glass build goes out as 1.0.1 while that version is still in review)
+
+```
+A fresh look: a floating tab bar, buttons and switches in clear glass, and soft light behind the side bar on tablets and computers. The wall board is gone; today's rounds stay on the Today page.
+```
+
 ## Google Play
 
 - App category: Business. Tags: Business, Productivity.
