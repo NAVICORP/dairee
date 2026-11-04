@@ -154,14 +154,31 @@ Free on Android, iPhone and the web: https://dairee.skifi.co
 
 Both stores sign in with the same account, the one Kuree's reviewers use: **contact@skifi.co** with its review password (the owner types it in; it is never written down here). Sign in with Email > Use a password. That account is the admin of a sample farm, **Sample Dairy**, full of made-up customers, rounds, bills and cows (supabase/migrations/0010_review_farm.sql). To delete the account: Profile > Delete account (please don't, on the review account).
 
-Review notes (both stores):
+Review notes (both stores). Rewritten 4 Nov 2026 after Apple asked for more information under Guideline 2.1 (purpose, how to use it, services, regions, regulation). Apple also wants a screen recording on a real iPhone, from launch through sign-in, the main pages and Delete account, attached under App Review Information > Attachment.
 
 ```
-Sign in with Email, then Use a password, with the account below. It opens Sample Dairy, a farm with made-up customers, rounds, bills and cows.
+1. What Dairee is for
+Dairee is for small dairy farms that deliver milk to homes, shops and hotels every morning and evening. Most of them keep this in notebooks and spreadsheets. Dairee keeps it in one place: who gets how much milk, the delivery round door by door, pauses and one-day changes, empty bottles to collect, monthly bills, payments received and what each customer still owes, and milking, health and breeding records for each cow. The owner adds staff (delivery, office, cow care), and each sees only their part. Customers can sign in to see their own milk, bills and payments and ask for changes. Any farm can sign up and use it; it is not made for one particular business.
 
-Dairee keeps a dairy farm's records: who gets milk, deliveries, bills and payments. It never takes or moves money; customers pay the farm directly.
+2. How to use it
+- Tap I work at a farm, then Email, then Use a password, and sign in with the account in Sign-in Information. It opens Sample Dairy, a farm with made-up customers, rounds, bills and cows.
+- Today: the morning round. Tap Deliver at a door to mark it delivered, Collect when empty bottles come back. Switch between Morning and Evening at the top.
+- Customers: open any customer to see their milk, money and history. Pause and Change a day are there too.
+- To collect: who still owes money, with bills and payments. Record payment adds one.
+- Profile, under Farm: Packing, Reports, Cows, Staff and Settings.
+- The customer side: open Customers, pick a customer and tap Give a password. Sign out, tap I'm a customer, and sign in with that customer's number and the password shown. The customer sets their own password first.
+- A new farm: sign in with an email code, then Start a farm.
+- Delete account: Profile, then Delete account. Please don't delete the review account; it holds the sample farm.
 
-To see the customer side: open Customers, pick any customer and tap Give a password. Sign out, choose I'm a customer on the first screen, and sign in with that customer's number and the password shown. The customer sets their own password first.
+3. Services the app uses
+- Dairee's own server and PostgreSQL database at dairee.skifi.co, run by SKIFI GROUP LLC.
+- SkAuth, SkiFi's own sign-in service at account.skifi.co (email code, WhatsApp code or password).
+- Resend sends the email codes. Meta's WhatsApp Business Platform sends the WhatsApp codes.
+- No payment processor, in-app purchases, ads, analytics or AI services. Dairee never takes or moves money: customers pay the farm directly (cash, UPI or bank) and the farm records the payment.
 
-Delete account: Profile, then Delete account.
+4. Regions
+Dairee works the same in every region. Each farm chooses its currency in Settings, and email sign-in works everywhere.
+
+5. Regulated industry or third-party material
+Dairee only keeps a farm's own records. It does not sell milk, handle money, give veterinary advice or show licensed third-party material, so no licences or permissions apply.
 ```
