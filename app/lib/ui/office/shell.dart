@@ -19,7 +19,6 @@ import 'settings.dart';
 import 'staff.dart';
 import 'staff_gate.dart';
 import 'today.dart';
-import 'wallboard.dart';
 
 /// One page of the farm: a footer tab on phones, a line in the side bar on
 /// wide screens, or a row under Farm on the Profile tab.
@@ -315,9 +314,6 @@ class ProfilePage extends StatelessWidget {
         const GroupLabel('Farm'),
         LinkGroup([
           for (final p in pages) LinkRow(p.icon, p.label, () => open(p.key), sub: p.sub),
-          if (farm.can('deliveries'))
-            LinkRow(Icons.tv_rounded, 'Wall board', () => Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => WallBoard(farm: farm))),
-                sub: 'Today\'s rounds, full screen, for the office'),
           if (me.farms.length > 1) LinkRow(Icons.swap_horiz_rounded, 'Switch farm', () => switchFarm(context, farm), value: farm.name),
           LinkRow(Icons.refresh_rounded, 'Refresh my pages', reload, sub: 'After an admin changes what you can open'),
         ]),

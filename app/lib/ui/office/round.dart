@@ -10,7 +10,6 @@ import '../glass.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'shell.dart';
-import 'wallboard.dart';
 
 /// One stop on a round, as the server decided it, plus anything ticked here
 /// that is still waiting for a signal.
@@ -265,7 +264,6 @@ class _RoundViewState extends State<RoundView> {
     final waiting = Outbox.instance.waiting;
     final pick = await showPicker<String>(context, title: '${slotName(slot)} round, ${dateLabel(day)}', options: [
       if (waiting > 0) PickOption('send', 'Send waiting ticks', sub: '$waiting made with no signal', icon: Icons.cloud_upload_outlined),
-      if (widget.office) const PickOption('wall', 'Wall board', sub: 'Today\'s rounds, full screen, for the office', icon: Icons.tv_rounded),
       if (widget.alone) ...[
         if (Me.instance.farms.length > 1) PickOption('farm', 'Switch farm', sub: f.name, icon: Icons.swap_horiz_rounded),
         const PickOption('help', 'Help and support', icon: Icons.support_agent_rounded),
@@ -278,8 +276,6 @@ class _RoundViewState extends State<RoundView> {
       case 'send':
         await Outbox.instance.flush();
         await _load();
-      case 'wall':
-        await Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => WallBoard(farm: f)));
       case 'farm':
         await switchFarm(context, f);
       case 'help':
@@ -522,7 +518,7 @@ class _RoundViewState extends State<RoundView> {
 
   PreferredSizeWidget _appBar(bool wide) {
     final waiting = Outbox.instance.waiting;
-    final more = waiting > 0 || widget.office || widget.alone;
+    final more = waiting > 0 || widget.alone;
     final pushed = ModalRoute.of(context)?.canPop ?? false;
     return AppBar(
       titleSpacing: pushed ? Sp.xs : Sp.xl,

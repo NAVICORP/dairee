@@ -1,6 +1,5 @@
 /* dairee.skifi.co: the landing page. The phone in the hero ticks off the
-   morning round, the feature cards come in as they scroll into view, and the
-   wall board counts up while it is on screen. */
+   morning round, and the feature cards come in as they scroll into view. */
 document.documentElement.classList.add("js");
 
 /* where the store buttons go. The App Store link goes in once Apple has
@@ -101,7 +100,7 @@ var STORE = {
        glass over the light page, dark glass over the navy. A panel counts
        when it covers the middle of the bar and most of its width. Both looks
        are tinted enough to read over anything that slides under them. */
-    var nav = $("#nav"), adapt = $$("[data-adapt]"), darks = $$(".hero, .wall, .cta, .card--big"), toneRaf = 0;
+    var nav = $("#nav"), adapt = $$("[data-adapt]"), darks = $$(".hero, .cta, .card--big"), toneRaf = 0;
     function tone() {
       toneRaf = 0;
       nav.classList.toggle("is-stuck", window.scrollY > 8);
@@ -219,31 +218,6 @@ var STORE = {
       loop($(".stage"), [[1600, function () { tick("a"); }], [3000, function () { tick("b"); }], [4300, scrollOn],
         [5300, function () { tick("c"); }], [6600, function () { tick("d"); }], [7900, function () { tick("e"); }],
         [9000, function () { pack.classList.add("show"); }], [15000, reset]], 16000);
-    })();
-
-    /* ---------------------------------------------------------- the wall board */
-    (function wall() {
-      var m = $("#wbM"), fill = $("#wbBar"), l = $("#wbL"), time = $("#wbTime");
-      if (!m) return;
-      var steps = [[9, 18.5], [10, 19.5], [11, 21], [12, 22.5], [13, 25.5]], i = 0;
-      function clock(add) {
-        var d = new Date(now); d.setHours(6, 41 + add, 0, 0);
-        var h = d.getHours() % 12 || 12;
-        return h + ":" + String(d.getMinutes()).padStart(2, "0") + " am";
-      }
-      function set(k) {
-        var s = steps[k], from = steps[Math.max(0, k - 1)][1];
-        m.textContent = s[0];
-        fill.style.width = (s[0] / 13 * 100).toFixed(1) + "%";
-        if (k === 0) l.textContent = litres(s[1]); else count(l, from, s[1], 700);
-        time.textContent = clock(k * 2);
-      }
-      if (reduce) return;
-      var plan = [];
-      for (var k = 1; k < steps.length; k++) (function (k) { plan.push([k * 2200, function () { set(k); }]); })(k);
-      plan.push([steps.length * 2200 + 3000, function () { set(0); }]);
-      loop($(".tv"), plan, steps.length * 2200 + 3600);
-      set(i);
     })();
   });
 })();

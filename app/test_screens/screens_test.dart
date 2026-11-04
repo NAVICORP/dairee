@@ -17,7 +17,6 @@ import 'package:dairee/ui/office/payments.dart';
 import 'package:dairee/ui/office/shell.dart';
 import 'package:dairee/ui/office/staff.dart';
 import 'package:dairee/ui/office/staff_gate.dart';
-import 'package:dairee/ui/office/wallboard.dart';
 import 'package:dairee/ui/portal/portal_shell.dart';
 import 'package:dairee/ui/start/welcome.dart';
 import 'package:dairee/ui/theme.dart';
@@ -463,16 +462,6 @@ void main() {
     await settle(tester);
     await tap(tester, find.text('Pick'));
     await shot(tester, '82-date-picker');
-  }, skip: skip);
-
-  testWidgets('wall board', (tester) async {
-    tester.view.physicalSize = const Size(2560, 1600);
-    tester.view.devicePixelRatio = 2;
-    addTearDown(tester.view.reset);
-    final f = await signIn(tester);
-    await tester.pumpWidget(app(WallBoard(farm: f)));
-    await shot(tester, '83-wall-board');
-    await tester.pumpWidget(const SizedBox());
   }, skip: skip);
 
   testWidgets('portal', (tester) async {

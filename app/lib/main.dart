@@ -18,7 +18,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
-    // Phones stay upright; tablets turn freely (the wall board likes landscape).
+    // Phones stay upright; tablets turn freely.
     final view = PlatformDispatcher.instance.views.first;
     final shortest = view.physicalSize.shortestSide / view.devicePixelRatio;
     if (shortest < 600) await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);

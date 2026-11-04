@@ -82,7 +82,6 @@ RUN IT TOGETHER
 - Add staff by WhatsApp number or email and turn each page on or off for each person.
 - Delivery staff see just their stops. Money stays with who you choose.
 - Every change is kept, and by whom.
-- The wall board puts today's rounds large on any screen in the office.
 - Download customers, deliveries, bills, payments and the herd as spreadsheets.
 
 Sign in with a code on WhatsApp or by email. Delete your account any time from your Profile.
