@@ -349,9 +349,13 @@ class _ChangesState extends State<_Changes> {
   List<Map> get open => (widget.home['open_days'] as List? ?? const []).whereType<Map>().toList();
 
   /// Can this day and round still change? The server said so; the phone's clock is never asked.
+  /// "Both rounds" means the rounds this customer is on: a morning customer
+  /// can pause while the evening milk is being packed.
   bool _open(DateTime d, String slot) {
     final x = open.where((o) => o['day'] == isoDay(d)).firstOrNull;
     if (x == null) return d.isAfter(addDays(today, open.length - 1));
+    final mine = (widget.home['customer'] as Map?)?['delivery_slot'];
+    if (slot == 'both' && (mine == 'morning' || mine == 'evening')) return x[mine] == true;
     if (slot == 'both') return x['morning'] == true && x['evening'] == true;
     return x[slot] == true;
   }

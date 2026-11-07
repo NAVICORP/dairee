@@ -50,4 +50,9 @@ void main() {
     final e = Api.error(403, {'message': 'new row violates row-level security policy for table "staff"', 'code': '42501'});
     expect(e.message, contains('permission'));
   });
+
+  test('a lost decimal point reads as plain words', () {
+    final e = Api.error(400, {'message': 'new row for relation "delivery_records" violates check constraint "delivery_records_litres_sane"', 'code': '23514'});
+    expect(e.message, contains('decimal point'));
+  });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -48,9 +50,10 @@ class Stop {
   List<Map<String, dynamic>> get bottleDays =>
       [for (final d in (j['bottle_days'] as List? ?? const []).whereType<Map>()) Map<String, dynamic>.from(d)];
 
-  /// One round's bottle out is a house that had milk yesterday: it comes back
-  /// with the next. Bottles from two rounds or more is a house behind.
-  bool get behind => bottleDays.length > 1;
+  /// A day's bottles out is a house that had milk yesterday: they come back
+  /// with the next. A house on both rounds has two rounds' bottles out on a
+  /// normal day, so it is behind only from one round more than that.
+  bool get behind => bottleDays.length > (j['delivery_slot'] == 'both' ? 2 : 1);
 
   /// Where the stop is, for the row: the room, or the address.
   String get spot => room.isNotEmpty ? room : address;
@@ -145,8 +148,14 @@ class RoundView extends StatefulWidget {
   State<RoundView> createState() => _RoundViewState();
 }
 
-class _RoundViewState extends State<RoundView> {
+class _RoundViewState extends State<RoundView> with WidgetsBindingObserver {
   late DateTime day = widget.day ?? widget.farm.today;
+
+  /// The farm's today, as the server last said it. A phone left on this
+  /// screen overnight must not open on yesterday's round in the morning.
+  late DateTime today = widget.farm.today;
+  DateTime loadedAt = DateTime.now();
+  Timer? _clock;
 
   /// Morning is always where the page starts: the evening is one tap away.
   late String slot = widget.slot ?? 'morning';
@@ -177,11 +186,15 @@ class _RoundViewState extends State<RoundView> {
   void initState() {
     super.initState();
     Outbox.instance.addListener(_outbox);
+    WidgetsBinding.instance.addObserver(this);
+    _clock = Timer.periodic(const Duration(minutes: 1), (_) => _checkDay());
     _load();
   }
 
   @override
   void dispose() {
+    _clock?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     Outbox.instance.removeListener(_outbox);
     _q.dispose();
     super.dispose();
@@ -202,12 +215,37 @@ class _RoundViewState extends State<RoundView> {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkDay(away: DateTime.now().difference(loadedAt) > const Duration(minutes: 30));
+  }
+
+  /// The phone's date has moved on, or the app was away a while: ask the
+  /// server again, which says what day it is at the farm.
+  void _checkDay({bool away = false}) {
+    if (!mounted) return;
+    if (!away && dayOnly(DateTime.now()) == dayOnly(loadedAt)) return;
+    loadedAt = DateTime.now();
+    _load();
+  }
+
   Future<void> _load() async {
     final d = day, sl = slot;
     try {
       final r = await Api.instance.rpc('round', {'day': isoDay(d), 'slot': sl});
       if (!mounted || d != day || sl != slot) return;
       final m = Map<String, dynamic>.from(r as Map);
+      loadedAt = DateTime.now();
+      // A new day at the farm: whoever was on today's round moves to the new one.
+      final now = parseDay(m['today']);
+      if (now != null && now != today) {
+        final follow = d == today;
+        today = now;
+        if (follow) {
+          _go(now, sl);
+          return;
+        }
+      }
       final list = (m['stops'] as List? ?? const []).whereType<Map>().map((e) => Stop.of(Map<String, dynamic>.from(e))).toList();
       // What was ticked here and not sent yet still shows as ticked.
       for (final s in list) {
@@ -256,7 +294,7 @@ class _RoundViewState extends State<RoundView> {
   }
 
   Future<void> _pickDay() async {
-    final d = await pickDate(context, initial: day, last: addDays(f.today, 7), title: 'Which day');
+    final d = await pickDate(context, initial: day, last: addDays(today, 7), title: 'Which day');
     if (d != null && mounted) _go(d, slot);
   }
 
@@ -574,7 +612,7 @@ class _RoundViewState extends State<RoundView> {
       );
 
   Widget _controls() {
-    final dayWord = day == f.today ? 'Today' : dateLabel(day).replaceAll(' ${day.year}', '');
+    final dayWord = day == today ? 'Today' : dateLabel(day).replaceAll(' ${day.year}', '');
     return _card(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -1298,6 +1336,32 @@ class _StopRowState extends State<_StopRow> {
     super.dispose();
   }
 
+  bool asking = false;
+
+  /// Litres typed for a delivered stop. An entry ten times what the house
+  /// takes is read back first: a lost decimal point (750 for 0.75) is a
+  /// number like any other, and it would sit in every bill and report.
+  Future<void> _submit(num q) async {
+    final s = widget.stop;
+    if (asking || q == (s.deliveredQty ?? s.qty)) return;
+    final usual = s.standing > 0 ? s.standing : s.qty;
+    if (usual > 0 && q >= usual * 10) {
+      asking = true;
+      final ok = await confirm(context,
+          title: 'Is ${litres(q)} right?',
+          text: '${s.name} usually takes ${litres(usual)}. Check the decimal point.',
+          yes: 'Yes, ${litres(q)}',
+          no: 'Change it');
+      asking = false;
+      if (!mounted) return;
+      if (!ok) {
+        qty.text = _q(s);
+        return;
+      }
+    }
+    widget.onLitres(q);
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = widget.stop;
@@ -1497,12 +1561,12 @@ class _StopRowState extends State<_StopRow> {
                 ),
                 onSubmitted: (v) {
                   final q = num.tryParse(v.trim());
-                  if (q != null && q >= 0) widget.onLitres(q);
+                  if (q != null && q >= 0) _submit(q);
                 },
                 onTapOutside: (_) {
                   FocusManager.instance.primaryFocus?.unfocus();
                   final q = num.tryParse(qty.text.trim());
-                  if (q != null && q >= 0) widget.onLitres(q);
+                  if (q != null && q >= 0) _submit(q);
                 },
               ),
             ),

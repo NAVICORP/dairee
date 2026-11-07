@@ -690,6 +690,17 @@ Future<bool> recordPayment(BuildContext context, FarmRole farm,
                 toast(ctx, 'Give the amount paid.', bad: true);
                 return;
               }
+              // More than the bill still needs: say where the rest goes before
+              // keeping it, rather than deciding about somebody's money quietly.
+              final due = unpaid.where((b) => b['bill_id'] == bill).map((b) => toNum(b['balance_due'])).firstOrNull;
+              final already = existing != null && existing['bill_id'] == bill ? toNum(existing['amount']) : 0;
+              if (due != null && a > due + already) {
+                final ok = await confirm(ctx,
+                    title: 'More than the bill needs',
+                    text: 'The bill still needs ${farm.money(due + already)}. The other ${farm.money(a - due - already)} is kept as credit for $name\'s next bill.',
+                    yes: 'Record it');
+                if (!ok || !ctx.mounted) return;
+              }
               final row = {
                 'customer_id': cid,
                 'amount': a,
