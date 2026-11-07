@@ -87,7 +87,7 @@ def bundle_id():
 def capabilities(bid):
     """Sign in with Apple must be on the bundle id before the profile is made,
     or the app's entitlement has nothing to match."""
-    have = call('GET', f'/bundleIds/{bid}/bundleIdCapabilities?limit=50')
+    have = call('GET', f'/bundleIds/{bid}/bundleIdCapabilities')
     if any(c['attributes'].get('capabilityType') == 'APPLE_ID_AUTH' for c in have.get('data', [])):
         return
     call('POST', '/bundleIdCapabilities', {'data': {
