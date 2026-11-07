@@ -84,6 +84,20 @@ def bundle_id():
     return made['data']['id']
 
 
+def capabilities(bid):
+    """Sign in with Apple must be on the bundle id before the profile is made,
+    or the app's entitlement has nothing to match."""
+    have = call('GET', f'/bundleIds/{bid}/bundleIdCapabilities?limit=50')
+    if any(c['attributes'].get('capabilityType') == 'APPLE_ID_AUTH' for c in have.get('data', [])):
+        return
+    call('POST', '/bundleIdCapabilities', {'data': {
+        'type': 'bundleIdCapabilities',
+        'attributes': {'capabilityType': 'APPLE_ID_AUTH', 'settings': [
+            {'key': 'APPLE_ID_AUTH_APP_CONSENT', 'options': [{'key': 'PRIMARY_APP_CONSENT'}]}]},
+        'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bid}}}}})
+    print('Turned on Sign in with Apple for the bundle id.')
+
+
 def app_id():
     found = call('GET', f'/apps?filter[bundleId]={BUNDLE_ID}&limit=10')
     for a in found.get('data', []):
@@ -134,6 +148,7 @@ def setup(out):
                  'Create it first: App Store Connect > Apps > + > New App.')
     state['app_id'] = app
     bid = bundle_id()
+    capabilities(bid)
 
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     csr = (x509.CertificateSigningRequestBuilder()

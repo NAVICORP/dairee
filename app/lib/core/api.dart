@@ -308,6 +308,20 @@ class Api {
     await _take(r.json);
   }
 
+  /// The code SkAuth hands back after Google, with the secret this app made.
+  Future<void> exchangeCode(String code, String verifier) async {
+    final r = await _raw('POST', '/auth/v1/token',
+        query: {'grant_type': 'pkce'}, body: {'auth_code': code, 'code_verifier': verifier}, withUser: false);
+    await _take(r.json);
+  }
+
+  /// A token from the phone's own sign-in sheet (Sign in with Apple).
+  Future<void> signInWithIdToken(String provider, String token, {String? nonce}) async {
+    final r = await _raw('POST', '/auth/v1/token',
+        query: {'grant_type': 'id_token'}, body: {'provider': provider, 'id_token': token, if (nonce != null) 'nonce': nonce}, withUser: false);
+    await _take(r.json);
+  }
+
   /// A password of the signed-in person's own choosing, for their email.
   Future<void> setPassword(String password) async {
     await _raw('PUT', '/auth/v1/user', body: {'password': password});

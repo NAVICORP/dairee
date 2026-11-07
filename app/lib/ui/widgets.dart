@@ -7,7 +7,7 @@ import '../core/format.dart';
 import 'glass.dart';
 import 'theme.dart';
 
-enum KButtonKind { primary, secondary, ghost, danger, blue }
+enum KButtonKind { primary, secondary, ghost, danger, blue, black }
 
 /// A rounded button sized to its label (or full width when asked).
 class KButton extends StatelessWidget {
@@ -16,6 +16,7 @@ class KButton extends StatelessWidget {
     required this.label,
     this.onPressed,
     this.icon,
+    this.leading,
     this.kind = KButtonKind.primary,
     this.busy = false,
     this.expand = false,
@@ -25,6 +26,9 @@ class KButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+
+  /// A picture in place of the icon, such as Google's G.
+  final Widget? leading;
   final KButtonKind kind;
   final bool busy;
   final bool expand;
@@ -38,6 +42,7 @@ class KButton extends StatelessWidget {
       KButtonKind.ghost => (Colors.transparent, K.blue, BorderSide.none),
       KButtonKind.danger => (K.badBg, K.bad, BorderSide.none),
       KButtonKind.blue => (K.blue, Colors.white, BorderSide.none),
+      KButtonKind.black => (Colors.black, Colors.white, BorderSide.none),
     };
     final enabled = onPressed != null && !busy;
     final h = small ? 40.0 : 46.0;
@@ -47,9 +52,11 @@ class KButton extends StatelessWidget {
       children: [
         if (busy)
           SizedBox(width: 17, height: 17, child: CircularProgressIndicator(strokeWidth: 2.4, color: fg))
+        else if (leading != null)
+          SizedBox(width: small ? 16 : 18, height: small ? 16 : 18, child: leading)
         else if (icon != null)
           Icon(icon, size: small ? 16 : 18, color: fg),
-        if (busy || icon != null) SizedBox(width: small ? 6 : 8),
+        if (busy || icon != null || leading != null) SizedBox(width: small ? 6 : 8),
         Flexible(
           child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
               style: T.button.copyWith(color: fg, fontSize: small ? 13.5 : 14.5)),
@@ -58,7 +65,7 @@ class KButton extends StatelessWidget {
     );
     // The solid buttons catch the light like polished glass.
     final rim = switch (kind) {
-      KButtonKind.primary || KButtonKind.blue => GlassTone.dark,
+      KButtonKind.primary || KButtonKind.blue || KButtonKind.black => GlassTone.dark,
       KButtonKind.secondary => GlassTone.light,
       _ => null,
     };

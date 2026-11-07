@@ -351,6 +351,15 @@ async function handle(req, res) {
     return res.end();
   }
 
+  // Back from Google on the phones: SkAuth only returns to SkiFi's own sites, so
+  // it comes here first and is handed on to the app's own address, where the
+  // sign-in sheet is waiting for it (code or error, nothing else).
+  if (p === '/auth/app') {
+    const back = new URLSearchParams();
+    for (const k of ['code', 'error', 'error_description']) if (url.searchParams.has(k)) back.set(k, url.searchParams.get(k).slice(0, 500));
+    res.writeHead(302, { location: `co.skifi.dairee://auth?${back}`, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' });
+    return res.end();
+  }
   if (p === '/app') return redirect(res, `/app/${url.search}`, true);
   if (p.startsWith('/app/')) return serveApp(req, res, p);
   if (p === '/login' || p === '/login/') return redirect(res, '/app/');

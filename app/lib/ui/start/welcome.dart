@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api.dart';
 import '../../core/config.dart';
 import '../../core/format.dart';
+import '../../core/social.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -108,7 +110,10 @@ class Welcome extends StatefulWidget {
 enum _Who { pick, staff, customer }
 
 class _WelcomeState extends State<Welcome> {
-  late _Who who = widget.customerFarm != null ? _Who.customer : _Who.pick;
+  // Back from Google on the web app: straight to the farm sign-in, which finishes it.
+  late _Who who = widget.customerFarm != null
+      ? _Who.customer
+      : (kIsWeb && (Uri.base.queryParameters['code'] != null || Uri.base.queryParameters['error'] != null) ? _Who.staff : _Who.pick);
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +232,12 @@ class _StaffSignInState extends State<StaffSignIn> {
   final _pass = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) WidgetsBinding.instance.addPostFrameCallback((_) => _run(finishWebSignIn));
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _num.dispose();
@@ -261,6 +272,8 @@ class _StaffSignInState extends State<StaffSignIn> {
     });
     try {
       await job();
+    } on SignInCancelled {
+      // Closed the sign-in sheet: nothing to say.
     } on ApiError catch (e) {
       if (mounted) setState(() => error = e.message);
     } catch (e) {
@@ -323,9 +336,22 @@ class _StaffSignInState extends State<StaffSignIn> {
     switch (step) {
       case _Step.start:
         return [
-          KButton(label: 'Continue with WhatsApp', icon: Icons.chat_rounded, expand: true, onPressed: () => _go(_Step.phone)),
+          KButton(label: 'Continue with WhatsApp', icon: Icons.chat_rounded, expand: true, onPressed: busy ? null : () => _go(_Step.phone)),
           const SizedBox(height: Sp.md - 2),
-          KButton(label: 'Use email instead', icon: Icons.mail_outline_rounded, kind: KButtonKind.secondary, expand: true, onPressed: () => _go(_Step.email)),
+          KButton(
+            label: 'Continue with Google',
+            leading: Image.asset('assets/brand/google.png', filterQuality: FilterQuality.medium),
+            kind: KButtonKind.secondary,
+            expand: true,
+            busy: busy,
+            onPressed: () => _run(signInWithGoogle),
+          ),
+          if (appleOffered) ...[
+            const SizedBox(height: Sp.md - 2),
+            KButton(label: 'Sign in with Apple', icon: Icons.apple, kind: KButtonKind.black, expand: true, onPressed: busy ? null : () => _run(signInWithApple)),
+          ],
+          const SizedBox(height: 4),
+          _ghosts([KButton(label: 'Use email instead', kind: KButtonKind.ghost, small: true, onPressed: busy ? null : () => _go(_Step.email))]),
         ];
       case _Step.phone:
         return [
