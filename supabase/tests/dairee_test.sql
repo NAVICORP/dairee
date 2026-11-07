@@ -440,6 +440,101 @@ select pg_temp.ok((public.portal_sign_in('9822222222', 'whatever') ->> 'error') 
 reset role;
 select pg_temp.ok(public.temporary_password('Lakshmi') ~ '^Laks[0-9]{4}$', 'a temporary password is the name and four random digits');
 
+-- ---------------------------------------------------------------- fixes carried over from Mazra
+select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com');
+-- A lost decimal point is refused, not saved.
+select pg_temp.fails(format($$select public.set_delivery(%L, %L::date, 'evening', true, 750)$$, pg_temp.get('c2'), pg_temp.get('today')),
+  'litres_sane', 'a delivery of 750 litres is refused');
+select pg_temp.fails(format($$select public.set_temporary(%L, %L::date + 4, 'evening', 300)$$, pg_temp.get('c2'), pg_temp.get('today')),
+  'litres_sane', 'and so is a one-day change of 300');
+select pg_temp.fails($$insert into public.customers (name, phone, milk_quantity) values ('Typo', '9855555550', 750)$$,
+  'litres_sane', 'and a standing order of 750');
+-- A new customer starts on the farm's today, not the server's.
+insert into public.customers (name, phone, building, room, milk_quantity, delivery_slot) values ('Mini', '9866666666', 'Tower 3', '1A', 1, 'morning');
+select pg_temp.put('c4', (select id::text from public.customers where name = 'Mini'));
+select pg_temp.ok((select start_date from public.customers where name = 'Mini') = pg_temp.get('today')::date,
+  'a new customer starts on the farm''s today');
+update public.customers set start_date = pg_temp.get('today')::date - 5 where name = 'Mini';
+select public.save_customer_vessels(pg_temp.get('c4')::uuid, jsonb_build_array(
+  jsonb_build_object('container_id', pg_temp.get('b1'), 'slot', 'morning', 'quantity', 1)));
+select public.set_delivery(pg_temp.get('c4')::uuid, pg_temp.get('today')::date - 3, 'morning', true);
+select public.set_delivery(pg_temp.get('c4')::uuid, pg_temp.get('today')::date - 2, 'morning', true);
+-- A bill never runs past today, and a day still to come is never missed.
+select pg_temp.fails(format($$select public.generate_bills(%L::date + 1, %L::date + 5)$$, pg_temp.get('today'), pg_temp.get('today')),
+  'not started yet', 'a bill for days still to come is refused');
+select pg_temp.put('mb', (public.generate_bills(pg_temp.get('today')::date - 3, pg_temp.get('today')::date + 10,
+  array[pg_temp.get('c4')::uuid]))::text);
+select pg_temp.ok((pg_temp.get('mb')::jsonb ->> 'period_to')::date = pg_temp.get('today')::date, 'a bill run past today stops at today');
+select pg_temp.ok((select period_to = pg_temp.get('today')::date and missed_days = 2 and delivered_days = 2
+                     from public.bills where customer_id = pg_temp.get('c4')::uuid),
+  'and counts only the days that came as missed');
+select pg_temp.ok(jsonb_array_length(public.report_days(pg_temp.get('today')::date - 2, pg_temp.get('today')::date + 5)) = 3,
+  'a report stops at today');
+delete from public.bills where customer_id = pg_temp.get('c4')::uuid;
+-- A bottle from a closed day can still come back; undoing it needs the day open.
+select public.lock_day(pg_temp.get('today')::date - 3, true);
+select public.set_bottle_returned(pg_temp.get('c4')::uuid, pg_temp.get('today')::date - 3, 'morning', true);
+select pg_temp.ok((select bottle_returned from public.delivery_records
+                    where customer_id = pg_temp.get('c4')::uuid and delivery_date = pg_temp.get('today')::date - 3),
+  'an earlier bottle is marked back even when its day is closed');
+select pg_temp.fails(format($$select public.set_bottle_returned(%L, %L::date - 3, 'morning', false)$$, pg_temp.get('c4'), pg_temp.get('today')),
+  'closed', 'but taking that back needs the day open');
+select public.lock_day(pg_temp.get('today')::date - 3, false);
+-- The round says which rounds each house is on, for the bottle flag.
+select pg_temp.ok((select s ->> 'delivery_slot' from jsonb_array_elements(public.round(pg_temp.get('today')::date, 'morning') -> 'stops') s
+                    where s ->> 'customer_id' = pg_temp.get('c2')) = 'both', 'the round says Rahman is on both rounds');
+-- Rahman gets a portal login too.
+select pg_temp.put('pw2', (public.issue_customer_password(pg_temp.get('c2')::uuid)) ->> 'password');
+reset role;
+update public.farms set customer_pause = true, morning_start = '00:00', morning_end = '00:01' where id = pg_temp.get('f1')::uuid;
+select pg_temp.as_anon();
+select pg_temp.put('tok2', (public.portal_sign_in('9833333333', pg_temp.get('pw2'))) ->> 'token');
+select public.portal_change_password(pg_temp.get('tok2'), pg_temp.get('pw2'), 'two-rounds-daily');
+reset role;
+-- Taking a request back is held to the same clock as making it.
+insert into public.temporary_requests (farm_id, customer_id, delivery_date, slot, quantity)
+values (pg_temp.get('f1')::uuid, pg_temp.get('c1')::uuid, pg_temp.get('today')::date, 'morning', 2),
+       (pg_temp.get('f1')::uuid, pg_temp.get('c1')::uuid, pg_temp.get('today')::date + 6, 'morning', 2);
+select pg_temp.put('rq0', (select id::text from public.temporary_requests where delivery_date = pg_temp.get('today')::date and status = 'pending'));
+select pg_temp.put('rq6', (select id::text from public.temporary_requests where delivery_date = pg_temp.get('today')::date + 6 and status = 'pending'));
+select pg_temp.as_anon();
+select pg_temp.fails(format($$select public.portal_withdraw_request(%L, %L)$$, pg_temp.get('tok'), pg_temp.get('rq0')),
+  'already being packed', 'today''s request cannot be taken back once packing has started');
+select public.portal_withdraw_request(pg_temp.get('tok'), pg_temp.get('rq6')::uuid);
+reset role;
+select pg_temp.ok((select status from public.temporary_requests where delivery_date = pg_temp.get('today')::date + 6) = 'withdrawn',
+  'a later day''s request can be taken back any time');
+-- A pause asks only about the customer's own rounds. The farm's clock is
+-- moved to a time zone where it is day, so this runs whatever the hour.
+do $$
+declare f uuid := pg_temp.get('f1')::uuid; tz text; now_t time; tmr date;
+begin
+  select z into tz from unnest(array['Asia/Kolkata', 'UTC', 'America/New_York', 'Pacific/Auckland']) z
+   where (now() at time zone z)::time between '03:00' and '20:00' limit 1;
+  update public.farms set timezone = tz where id = f;
+  now_t := public.farm_now(f)::time;
+  tmr := public.farm_today(f) + 1;
+  -- The evening milk is being packed right now; the morning's packing is long over.
+  update public.farms set evening_start = now_t - interval '1 hour', evening_end = now_t + interval '1 hour' where id = f;
+  perform pg_temp.as_anon();
+  perform public.portal_pause(pg_temp.get('tok'), 'tomorrow_only');
+  execute 'reset role';
+  perform pg_temp.ok(exists (select 1 from public.customer_pauses p where p.customer_id = pg_temp.get('c1')::uuid
+                               and p.from_date = tmr and p.set_by = 'customer'),
+    'a morning customer can pause tomorrow while the evening milk is packed');
+  perform pg_temp.as_anon();
+  perform public.portal_resume(pg_temp.get('tok'));
+  execute 'reset role';
+  perform pg_temp.ok(not exists (select 1 from public.customer_pauses p where p.customer_id = pg_temp.get('c1')::uuid
+                                   and p.from_date = tmr),
+    'and resume as well');
+  perform pg_temp.as_anon();
+  perform pg_temp.fails(format($q$select public.portal_pause(%L, 'tomorrow_only')$q$, pg_temp.get('tok2')),
+    'evening milk is packed', 'a customer on both rounds waits for the evening packing, and is told which round');
+  execute 'reset role';
+  update public.farms set timezone = 'Asia/Kolkata' where id = f;
+end $$;
+reset role;
 -- ---------------------------------------------------------------- notifications
 select pg_temp.ok(exists (select 1 from public.push_outbox where kind = 'request' and audience = 'area:pauses'),
   'a customer request tells the Pause / Stop staff');

@@ -277,6 +277,7 @@ class Api {
     }
     if (s.contains('violates foreign key')) return 'Other records still use this, so it cannot be deleted.';
     if (s.contains('bills_no_overlap')) return 'This customer already has a bill for some of those days.';
+    if (s.contains('litres_sane')) return 'That is more than 200 litres. Check the decimal point.';
     return m;
   }
 
