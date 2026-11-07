@@ -167,7 +167,9 @@ Free on Android, iPhone and the web: https://dairee.skifi.co
 
 Both stores sign in with the same account, the one Kuree's reviewers use: **contact@skifi.co** with its review password (the owner types it in; it is never written down here). Sign in with Email > Use a password. That account is the admin of a sample farm, **Sample Dairy**, full of made-up customers, rounds, bills and cows (supabase/migrations/0010_review_farm.sql). To delete the account: Profile > Delete account (please don't, on the review account).
 
-Review notes (both stores). Rewritten 4 Nov 2026 after Apple asked for more information under Guideline 2.1 (purpose, how to use it, services, regions, regulation). Apple also wants a screen recording on a real iPhone, from launch through sign-in, the main pages and Delete account, attached under App Review Information > Attachment.
+Rewritten 4 Nov 2026 after Apple asked for more information under Guideline 2.1 (purpose, how to use it, services, regions, regulation). Apple also wants a screen recording on a real iPhone, from launch through sign-in, the main pages and Delete account, attached under App Review Information > Attachment.
+
+Review notes (both stores):
 
 ```
 1. What Dairee is for
