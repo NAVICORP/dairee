@@ -84,7 +84,12 @@ RUN IT TOGETHER
 - Every change is kept, and by whom.
 - Download customers, deliveries, bills, payments and the herd as spreadsheets.
 
-Sign in with a code on WhatsApp or by email. Delete your account any time from your Profile.
+NOTIFICATIONS THAT MATTER
+- The office hears when a customer pauses or asks for more milk, and when a problem is reported at a door.
+- Delivery staff get a reminder before each round, with the stops and litres.
+- Customers hear when a bill is ready, a payment is recorded or their request is answered.
+
+Sign in with Google, Apple, a code on WhatsApp or by email. Delete your account any time from your Profile.
 
 Privacy: https://dairee.skifi.co/privacy
 Terms: https://dairee.skifi.co/terms
@@ -102,10 +107,13 @@ The first release of Dairee: the milk round, packing, pauses, bills and payments
 A new delivery screen. Pick the day and the morning or evening round, see how far the round has got, and work through every building: tick each door, take back the bottle, and see the bottles still out from earlier days. Filter by building, delivery person or quantity, and report a problem at any door.
 ```
 
-**What's new in 1.0.2** (Google Play; on the App Store the glass build goes out as 1.0.1 while that version is still in review)
+**What's new in 1.0.2** (Google Play; on the App Store this build goes out as 1.0.1, still in review)
 
 ```
-A fresh look: a floating tab bar, buttons and switches in clear glass, and soft light behind the side bar on tablets and computers. The wall board is gone; today's rounds stay on the Today page.
+A fresh look in clear glass, with a new loading screen.
+Notifications: customer requests, problems on the round, round reminders, and bills and payments for customers.
+Sign in with Google, and with Apple on iPhone.
+Bills and reports stop at today, pauses follow each customer's own rounds, and many small fixes.
 ```
 
 ## Google Play
