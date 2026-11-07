@@ -85,17 +85,24 @@ def bundle_id():
 
 
 def capabilities(bid):
-    """Sign in with Apple must be on the bundle id before the profile is made,
-    or the app's entitlement has nothing to match."""
-    have = call('GET', f'/bundleIds/{bid}/bundleIdCapabilities')
-    if any(c['attributes'].get('capabilityType') == 'APPLE_ID_AUTH' for c in have.get('data', [])):
-        return
-    call('POST', '/bundleIdCapabilities', {'data': {
-        'type': 'bundleIdCapabilities',
-        'attributes': {'capabilityType': 'APPLE_ID_AUTH', 'settings': [
-            {'key': 'APPLE_ID_AUTH_APP_CONSENT', 'options': [{'key': 'PRIMARY_APP_CONSENT'}]}]},
-        'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bid}}}}})
-    print('Turned on Sign in with Apple for the bundle id.')
+    """Sign in with Apple and push notifications must be on the bundle id before
+    the profile is made, or the app's entitlements have nothing to match."""
+    have = {c['attributes'].get('capabilityType') for c in
+            call('GET', f'/bundleIds/{bid}/bundleIdCapabilities').get('data', [])}
+    want = {
+        'APPLE_ID_AUTH': [{'key': 'APPLE_ID_AUTH_APP_CONSENT', 'options': [{'key': 'PRIMARY_APP_CONSENT'}]}],
+        'PUSH_NOTIFICATIONS': None,
+    }
+    for kind, settings in want.items():
+        if kind in have:
+            continue
+        attrs = {'capabilityType': kind}
+        if settings:
+            attrs['settings'] = settings
+        call('POST', '/bundleIdCapabilities', {'data': {
+            'type': 'bundleIdCapabilities', 'attributes': attrs,
+            'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bid}}}}})
+        print(f'Turned on {kind} for the bundle id.')
 
 
 def app_id():

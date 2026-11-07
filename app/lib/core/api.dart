@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config.dart';
+import 'push.dart';
 
 /// Something the server or the network said no to, in words a person can act on.
 class ApiError implements Exception {
@@ -334,6 +335,7 @@ class Api {
   }
 
   Future<void> signOut() async {
+    await Push.instance.detach();
     if (_session != null) {
       try {
         await _raw('POST', '/auth/v1/logout', retry: false);
@@ -506,6 +508,7 @@ class Portal {
   }
 
   Future<void> signOut() async {
+    await Push.instance.detach();
     final t = token;
     if (t != null) {
       try {

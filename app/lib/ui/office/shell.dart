@@ -5,7 +5,9 @@ import '../../core/api.dart';
 import '../../core/config.dart';
 import '../../core/farm.dart';
 import '../../core/format.dart';
+import '../../core/push.dart';
 import '../glass.dart';
+import '../push_row.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'changes.dart';
@@ -84,6 +86,31 @@ class _FarmShellState extends State<FarmShell> {
   bool wide = false;
 
   static const _tabs = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    Push.instance.opened.addListener(_opened);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _opened());
+  }
+
+  @override
+  void dispose() {
+    Push.instance.opened.removeListener(_opened);
+    super.dispose();
+  }
+
+  /// A tapped notification: open the page it is about, when this person has it.
+  void _opened() {
+    final link = Push.instance.opened.value;
+    if (link == null || !mounted) return;
+    Push.instance.opened.value = null;
+    if (link == 'today' && pages.isNotEmpty) {
+      _select(pages.any((p) => p.key == 'today') ? 'today' : pages.first.key);
+    } else if (pages.any((p) => p.key == link)) {
+      _open(link);
+    }
+  }
 
   GlobalKey<NavigatorState> _nav(String key) => navs.putIfAbsent(key, () => GlobalKey<NavigatorState>(debugLabel: key));
 
@@ -316,6 +343,7 @@ class ProfilePage extends StatelessWidget {
           for (final p in pages) LinkRow(p.icon, p.label, () => open(p.key), sub: p.sub),
           if (me.farms.length > 1) LinkRow(Icons.swap_horiz_rounded, 'Switch farm', () => switchFarm(context, farm), value: farm.name),
           LinkRow(Icons.refresh_rounded, 'Refresh my pages', reload, sub: 'After an admin changes what you can open'),
+          if (Push.instance.supported) const PushSwitchRow(sub: 'Requests, problems on the round, reminders'),
         ]),
         const GroupLabel('Help'),
         LinkGroup([

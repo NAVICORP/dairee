@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/api.dart';
 import '../../core/farm.dart';
 import '../../core/format.dart';
+import '../../core/push.dart';
+import '../loader.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'shell.dart';
@@ -44,6 +48,7 @@ class _StaffGateState extends State<StaffGate> {
     });
     try {
       await Me.instance.load();
+      if (Me.instance.farm != null) unawaited(Push.instance.attachStaff());
     } on ApiError catch (e) {
       error = e.message;
     }
@@ -52,7 +57,7 @@ class _StaffGateState extends State<StaffGate> {
 
   @override
   Widget build(BuildContext context) {
-    if (loading && Me.instance.farm == null) return const Scaffold(body: Loading());
+    if (loading && Me.instance.farm == null) return const Scaffold(body: SplashLoader());
     if (error != null && Me.instance.farm == null) {
       return Scaffold(
         body: SafeArea(

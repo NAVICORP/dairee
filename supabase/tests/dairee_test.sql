@@ -440,6 +440,29 @@ select pg_temp.ok((public.portal_sign_in('9822222222', 'whatever') ->> 'error') 
 reset role;
 select pg_temp.ok(public.temporary_password('Lakshmi') ~ '^Laks[0-9]{4}$', 'a temporary password is the name and four random digits');
 
+-- ---------------------------------------------------------------- notifications
+select pg_temp.ok(exists (select 1 from public.push_outbox where kind = 'request' and audience = 'area:pauses'),
+  'a customer request tells the Pause / Stop staff');
+select pg_temp.ok(exists (select 1 from public.push_outbox where kind = 'answer' and audience like 'customer:%' and title = 'Request approved'),
+  'and the answer goes back to the customer');
+select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com');
+select public.register_device('test-token-asha-0000000000', 'ios');
+select public.register_device('test-token-asha-0000000000', 'ios');
+reset role;
+select pg_temp.ok((select count(*) from public.push_devices where token = 'test-token-asha-0000000000') = 1, 'a phone registers once');
+select pg_temp.as_anon();
+select pg_temp.fails($$select public.register_device('test-token-anon-0000000000', 'ios')$$, 'not signed in', 'nobody registers a staff phone without signing in');
+select pg_temp.fails($$select * from public.push_outbox$$, 'permission denied', 'the outbox is closed to the app');
+reset role;
+select pg_temp.ok(exists (select 1 from public.push_claim(500) where token = 'test-token-asha-0000000000'),
+  'an admin phone receives the farm''s staff messages');
+select pg_temp.ok(not exists (select 1 from public.push_outbox where sent_at is null and attempts = 0),
+  'claiming takes every waiting message');
+select pg_temp.as_user('a1111111-1111-1111-1111-111111111111', null, 'asha@example.com');
+select public.forget_device('test-token-asha-0000000000');
+reset role;
+select pg_temp.ok(not exists (select 1 from public.push_devices where token = 'test-token-asha-0000000000'), 'signing out forgets the phone');
+
 -- ---------------------------------------------------------------- leaving
 select pg_temp.as_user('b2222222-2222-2222-2222-222222222222', null, 'babu@example.com');
 select public.delete_my_data();

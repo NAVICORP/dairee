@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -6,6 +8,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api.dart';
 import '../../core/config.dart';
 import '../../core/format.dart';
+import '../../core/push.dart';
+import '../loader.dart';
+import '../push_row.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -26,7 +31,22 @@ class _PortalShellState extends State<PortalShell> {
   @override
   void initState() {
     super.initState();
+    Push.instance.opened.addListener(_opened);
     _load();
+  }
+
+  @override
+  void dispose() {
+    Push.instance.opened.removeListener(_opened);
+    super.dispose();
+  }
+
+  /// A tapped notification: a bill or payment opens Payment, an answer Changes.
+  void _opened() {
+    final link = Push.instance.opened.value;
+    if (link == null || !mounted) return;
+    Push.instance.opened.value = null;
+    setState(() => tab = switch (link) { 'bills' => 1, 'changes' => 2, _ => tab });
   }
 
   Future<void> _load() async {
@@ -38,6 +58,8 @@ class _PortalShellState extends State<PortalShell> {
         mustChange = false;
         error = null;
       });
+      unawaited(Push.instance.attachCustomer());
+      _opened();
     } on ApiError catch (e) {
       if (!mounted) return;
       if (e.status == 403 && e.message.contains('own password')) {
@@ -59,7 +81,7 @@ class _PortalShellState extends State<PortalShell> {
         body: SafeArea(
           child: error != null
               ? LoadFailed(message: error!, onRetry: _load)
-              : const Loading(),
+              : const SplashLoader(label: 'Getting your milk ready'),
         ),
       );
     }
@@ -649,6 +671,10 @@ class _Settings extends StatelessWidget {
           LinkRow(Icons.storefront_outlined, '${farm['name']}', null, value: farm['phone'] == null ? null : prettyPhone(farm['phone'] as String?)),
           if (farm['phone'] != null) LinkRow(Icons.call_rounded, 'Call the farm', () => launchUrl(Uri.parse('tel:+${farm['phone']}'))),
         ]),
+        if (Push.instance.supported) ...[
+          const GroupLabel('On this phone'),
+          const LinkGroup([PushSwitchRow(sub: 'New bills, payments and answers to your requests')]),
+        ],
         const GroupLabel('Legal'),
         LinkGroup([
           LinkRow(Icons.privacy_tip_outlined, 'Privacy', () => launchUrl(Uri.parse(kPrivacyUrl), mode: LaunchMode.externalApplication)),

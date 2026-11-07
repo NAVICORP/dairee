@@ -32,6 +32,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Notifications: the small white bottle, Dairee blue, and their own channel. -->
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_dairee" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/dairee_blue" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="dairee" />
         <!-- Back from Google sign-in (dairee.skifi.co/auth/app hands it to this address). -->
         <activity
             android:name="com.linusu.flutter_web_auth_2.CallbackActivity"

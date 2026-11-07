@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../core/format.dart';
 import 'glass.dart';
+import 'loader.dart';
 import 'theme.dart';
 
 enum KButtonKind { primary, secondary, ghost, danger, blue, black }
@@ -1281,7 +1282,7 @@ class KNavBar extends StatelessWidget {
 class Loading extends StatelessWidget {
   const Loading({super.key});
   @override
-  Widget build(BuildContext context) => const Center(child: SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 3)));
+  Widget build(BuildContext context) => const Center(child: MiniLoader());
 }
 
 /// Something did not load: what happened, and a way to try again.

@@ -11,6 +11,7 @@ import 'dart:io';
 
 import 'package:dairee/core/api.dart';
 import 'package:dairee/core/farm.dart';
+import 'package:dairee/ui/loader.dart';
 import 'package:dairee/ui/office/customers.dart';
 import 'package:dairee/ui/office/herd.dart';
 import 'package:dairee/ui/office/payments.dart';
@@ -247,6 +248,7 @@ Map<String, dynamic> row(String table, String key, String value) =>
 
 void main() {
   setUpAll(() async {
+    SplashLoader.sensors = false;
     TestWidgetsFlutterBinding.ensureInitialized();
     await loadFonts();
     if (!_have) return;
@@ -267,6 +269,12 @@ void main() {
   });
 
   final skip = !_have;
+
+  testWidgets('loading', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(app(const Scaffold(body: SplashLoader())));
+    await shot(tester, '00-loading');
+  }, skip: skip);
 
   testWidgets('welcome', (tester) async {
     phone(tester);

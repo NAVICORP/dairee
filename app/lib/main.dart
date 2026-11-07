@@ -8,12 +8,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/api.dart';
 import 'core/outbox.dart';
+import 'core/push.dart';
 import 'ui/office/staff_gate.dart';
 import 'ui/portal/portal_shell.dart';
 import 'ui/start/welcome.dart';
 import 'ui/theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +32,7 @@ Future<void> main() async {
   ));
   await Future.wait([Api.instance.load(), Portal.instance.load()]);
   await Outbox.instance.load();
+  await Push.instance.init();
   runApp(const DaireeApp());
 }
 
@@ -43,6 +46,7 @@ class DaireeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: daireeTheme(),
       navigatorKey: navigatorKey,
+      scaffoldMessengerKey: messengerKey,
       supportedLocales: const [Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -72,6 +76,7 @@ class Gate extends StatefulWidget {
 class _GateState extends State<Gate> with WidgetsBindingObserver {
   late final StreamSubscription<Session?> _staff;
   late final StreamSubscription<String?> _portal;
+  late final StreamSubscription<dynamic> _push;
 
   @override
   void initState() {
@@ -80,6 +85,20 @@ class _GateState extends State<Gate> with WidgetsBindingObserver {
     _staff = Api.instance.changes.listen((s) {
       if (s == null) navigatorKey.currentState?.popUntil((r) => r.isFirst);
       setState(() {});
+    });
+    // A notification while the app is open (Android): shown in the app.
+    _push = Push.instance.foreground.listen((m) {
+      final n = m.notification;
+      if (n == null) return;
+      final link = m.data['link'] as String?;
+      messengerKey.currentState
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+          content: Text([n.title, n.body].whereType<String>().join('\n'), maxLines: 3, overflow: TextOverflow.ellipsis),
+          action: link == null || link.isEmpty ? null : SnackBarAction(label: 'Open', onPressed: () => Push.instance.opened.value = link),
+        ));
     });
     _portal = Portal.instance.changes.listen((t) {
       if (t == null) navigatorKey.currentState?.popUntil((r) => r.isFirst);
@@ -97,6 +116,7 @@ class _GateState extends State<Gate> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _staff.cancel();
     _portal.cancel();
+    _push.cancel();
     super.dispose();
   }
 

@@ -102,6 +102,26 @@ services:
       start_period: 10s
 
   # A database copy every night at 03:20 server time, the last 30 kept.
+  # Sends the push notifications the database queues (server/push.mjs).
+  # FCM_SERVICE_ACCOUNT: the Firebase service account key for project dairee,
+  # pasted in Dokploy > Environment (the JSON, or the JSON in base64).
+  push:
+    image: ghcr.io/navicorp/dairee:latest
+    pull_policy: always
+    restart: unless-stopped
+    command: ["node", "/srv/site/server/push.mjs"]
+    environment:
+      DB_HOST: db
+      DB_NAME: dairee
+      FCM_SERVICE_ACCOUNT: ${FCM_SERVICE_ACCOUNT:-}
+    volumes:
+      - secrets:/secrets:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+
   backup:
     image: ghcr.io/navicorp/farmi-life-db:latest
     restart: unless-stopped
